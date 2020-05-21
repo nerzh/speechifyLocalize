@@ -20,3 +20,16 @@ func realpath(_ url: URL) throws -> String {
     try realpath(url.path)
 }
 
+func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
+    let file: FileReader = .init(fileURL: fileURL)
+    do {
+        try file.open()
+        defer { file.close() }
+        while let line = try? file.readLine() {
+            handler(line)
+        }
+    } catch let error {
+        fatalError(error.localizedDescription)
+    }
+}
+

@@ -19,54 +19,87 @@ final class ParserCore {
     }
 
     func run() throws {
-        let currentStrings: Set<LocaleFolder> = getCurrentLocalizations(path: parser.localizationPath,
-                                                                        localizedPrefix: parser.localizedPrefix)
-        let newStrings: [String: LocalizedFile] = try findNewLocalizeStrings(parser.projectPath,
-                                                                             parser.stringPrefix,
-                                                                             parser.localizedPrefix)
-        write(mergeLocalizedStrings(currentStrings, newStrings))
+
+        var currentStrings: [LocaleFolder] = getCurrentLocalizations(path: parser.localizationPath,
+                                                                      localizedPrefix: parser.localizedPrefix)
+
+        let newStrings: [FileGroup] = try findNewLocalizeStrings(parser.projectPath,
+                                                                 parser.stringPrefix,
+                                                                 parser.localizationPath,
+                                                                 parser.localizedPrefix)
+        writeLocaleFiles(mergeLocalizedStrings(currentStrings, newStrings))
+        currentStrings = getCurrentLocalizations(path: parser.localizationPath, localizedPrefix: parser.localizedPrefix)
+        replaceInsideSwiftFiles(currentStrings, parser.projectPath, parser.localizationPath, parser.stringPrefix)
     }
 
-    private func write(_ folders: [LocaleFolder]) {
-        folders.forEach { (localeFolder) in
-            localeFolder.items.forEach { (localeFile) in
-                var resultString: String = .init()
-//                if !fileManager.fileExists(atPath: localeFile.path) {
-//                    fileManager.createFile(atPath: localeFile.path, contents: nil, attributes: nil)
-//                }
-//                print(localeFile.path)
+    private func replaceInsideSwiftFiles(_ folders: [LocaleFolder],
+                                         _ projectPath: String,
+                                         _ localizationPath: String,
+                                         _ stringPrefix: String
+    ) {
+        if let anyLocaleFile: LocaleFile = folders.first?.files.first {
+            recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
+                if folderPath != localizationPath {
+                    var resultText: String = .init()
 
-                localeFile.lines.forEach { (localeFileLine) in
-                    resultString.append(localeFileLine.text)
+                    readFile(fileURL) { (str) in
+                        let line: String = str.clean()
+                        guard
+                            let realProjectPath: String = try? realpath(projectPath)
+                            else { return }
+                        var filePath: String = fileURL.path
+                        deleteProjectPath(rooPath: realProjectPath, &filePath)
+                        let pattern: String = "^([\\s\\S]*)\"\\S*\(stringPrefix)([\\s\\S]+)\\S*?\"([\\s\\S]*)$"
+                        if line[pattern] {
+                            if  let beforeValue = str.regexp(pattern)[1],
+                                let value = str.regexp(pattern)[2],
+                                let afterValue = str.regexp(pattern)[3]
+                            {
+                                var newLine = str.replace("^[\\s\\S]+$", "\(beforeValue)\"\(value)\".localize\(afterValue)")
+                                resultText.append(newLine)
+                                return
+                            }
+                            resultText.append(str)
+                        }
+                        resultText.append(str)
+                    }
+
+                    let fileHandl: FileHandle = try! FileHandle(forWritingTo: URL(fileURLWithPath: fileURL.path))
+                    fileHandl.write(resultText.data(using: .utf8)!)
+                    fileHandl.closeFile()
                 }
-                print("file 1\n\n", localeFile)
-//                print("RESULT:\n\n", resultString)
-//                localeFile.localizedFiles.sorted { $0.key > $1.key }.forEach { (pair) in
-//
-//                    print(pair.value.text)
-
-//                    pair.value.localizedStrings.sorted { $0.key > $1.key }.forEach { (pair) in
-//                        print(pair.value.text)
-//                    }
-//                }
-
-//                let fileHandl: FileHandle = try! FileHandle(forWritingTo: URL(fileURLWithPath: localeFile.path))
-//                fileHandl.write(resultString.data(using: .utf8)!)
-//                fileHandl.closeFile()
             }
         }
     }
 
-    private func mergeLocalizedStrings(_ current: Set<LocaleFolder>, _ new: [String: LocalizedFile]) -> [LocaleFolder] {
+    private func writeLocaleFiles(_ folders: [LocaleFolder]) {
+        folders.forEach { (localeFolder) in
+            localeFolder.files.forEach { (localeFile) in
+                var resultString: String = .init()
+                if !fileManager.fileExists(atPath: localeFile.path) {
+                    fileManager.createFile(atPath: localeFile.path, contents: nil, attributes: nil)
+                }
+                localeFile.groups.forEach { (group) in
+                    resultString.append(group.text)
+                    resultString.append("\n")
+                }
+
+                let fileHandl: FileHandle = try! FileHandle(forWritingTo: URL(fileURLWithPath: localeFile.path))
+                fileHandl.write(resultString.data(using: .utf8)!)
+                fileHandl.closeFile()
+            }
+        }
+    }
+
+    private func mergeLocalizedStrings(_ current: [LocaleFolder], _ new: [FileGroup]) -> [LocaleFolder] {
         var result: [LocaleFolder] = .init()
 
         for var localeFolder in current {
-            for (index, localeFile) in localeFolder.items.enumerated() {
-                for clearKey in new.keys {
-                    var localizedFile: LocalizedFile = localeFile.getLocalizedFile(by: clearKey)
-                    localizedFile.merge(localizedFile: new[clearKey]!)
-                    localeFolder.items[index].localizedFiles[clearKey] = localizedFile
+            for var (index, localeFile) in localeFolder.files.enumerated() {
+                for lineGroup in new {
+                    localeFile.addGroup(lineGroup)
                 }
+                localeFolder.addLocaleFile(localeFile)
             }
             result.append(localeFolder)
         }
@@ -74,27 +107,22 @@ final class ParserCore {
         return result
     }
 
-    private func getCurrentLocalizations(path: String, localizedPrefix: String) -> Set<LocaleFolder> {
-        var result: Set<LocaleFolder> = .init()
+    private func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
+        var tempStore: [String: LocaleFolder] = .init()
 
         recursiveReadDirectory(path: path) { (folderPath, filePath) in
             var localeFolder: LocaleFolder = .init(path: folderPath)
-            if let existLocaleFolder = result.first(where: { $0 == localeFolder }) {
-                localeFolder = existLocaleFolder
+            if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
+            var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
+            readFile(filePath) { (str) in
+                localeFile.parseRawLocalizableString(str)
             }
-            let file: FileReader = .init(fileURL: filePath)
-            do {
-                try file.open()
-                defer { file.close() }
-                var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
-                while let str = try? file.readLine() {
-                    localeFile.parseRawLocalizableString(str)
-                }
-                localeFolder.items.append(localeFile)
-            } catch let error {
-                fatalError(error.localizedDescription)
-            }
-            result.insert(localeFolder)
+            localeFolder.addLocaleFile(localeFile)
+            tempStore[localeFolder.path] = localeFolder
+        }
+
+        let result: [LocaleFolder] = tempStore.values.map { (localeFolder) -> LocaleFolder in
+            localeFolder
         }
 
         return result
@@ -102,36 +130,38 @@ final class ParserCore {
 
     private func findNewLocalizeStrings(_ path: String,
                                         _ stringPrefix: String,
+                                        _ localizationPath: String,
                                         _ localizedPrefix: String
-    ) throws -> [String: LocalizedFile] {
-        var localizedFiles: [String: LocalizedFile] = .init()
+    ) throws -> [FileGroup] {
+        var tempStore: [String: FileGroup] = .init()
 
-        recursiveReadDirectory(path: path) { (_, url) in
-            let file: FileReader = .init(fileURL: url)
-            do {
-                try file.open()
-                defer { file.close() }
-                while let str = try? file.readLine() {
+        recursiveReadDirectory(path: path) { (folderPath, fileURL) in
+            if folderPath != localizationPath {
+                readFile(fileURL) { (str) in
                     let line: String = str.trimmingCharacters(in: CharacterSet.init(arrayLiteral: "\n"))
-                    let realProjectPath: String = try realpath(path)
-                    var filePath: String = url.path
+                    guard let realProjectPath: String = try? realpath(path) else { return }
+                    var filePath: String = fileURL.path
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
                     if line["\(stringPrefix)"] {
                         let key: String = makeKeyFrom(path: filePath)
                         guard
                             var value: String = line.regexp("\"\\S*(\(stringPrefix)[\\s\\S]+)\\S*?\"")[1]
-                            else { continue }
-                        value.replaceSelf("\(stringPrefix)", "")
-                        if localizedFiles[key] == nil { localizedFiles[key] = LocalizedFile(name: key) }
-                        localizedFiles[key]!.setLocalizedString(value: value, localizedPrefix: localizedPrefix)
+                            else { return }
+                        value.replaceFirstSelf("\(stringPrefix)", "")
+                        if tempStore[key] == nil {
+                            tempStore[key] = .init(name: key, localizedPrefix: localizedPrefix)
+                        }
+                        tempStore[key]!.addTextLine(value: value)
                     }
                 }
-            } catch let error {
-                fatalError(error.localizedDescription)
             }
         }
 
-        return localizedFiles
+        let result: [FileGroup] = tempStore.values.map { (fileGroup) -> FileGroup in
+            fileGroup
+        }
+
+        return result
     }
 
     private func makeKeyFrom(path: String) -> String {
