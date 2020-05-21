@@ -16,8 +16,11 @@ struct Parser: ParsableCommand {
     @Option(help: "Path to localizations.")
     var localizationPath: String
 
-    @Option(default: "localize.", help: "Prefix for localize strings")
-    var localizePrefix: String
+    @Option(default: "localize.", help: "Prefix for raw strings")
+    var stringPrefix: String
+
+    @Option(default: "String", help: "Prefix for localized strings")
+    var localizedPrefix: String
 
     func run() throws {
         try ParserCore(parser: self).run()
