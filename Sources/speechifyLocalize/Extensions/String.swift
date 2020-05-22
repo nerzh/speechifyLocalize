@@ -16,9 +16,7 @@ extension String {
     }
 
     mutating func cleanSelf() {
-        var string = self.trimmingCharacters(in: .whitespacesAndNewlines)
-//        string.replaceSelf("\\s+", " ")
-        self = string
+        self = self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
