@@ -112,7 +112,8 @@ struct FileGroup: LineGroupProtocol {
     init(name: String, localizedPrefix: String) {
         self.name = name.clean()
         self.localizedPrefix = localizedPrefix
-        guard let id = self.name?.toSHA256() else { fatalError("Can not convert to SHA256") }
+        self.id = .init()
+        guard let id = generateId(name) else { fatalError("Can not convert to SHA256") }
         self.id = id
     }
 
@@ -162,6 +163,10 @@ struct FileGroup: LineGroupProtocol {
                 addTextLine(number: nextNumber(), value: value)
             }
         }
+    }
+
+    func generateId(_ name: String) -> String? {
+        name.toSHA256()
     }
 
     private func addMARK(_ string: String) -> String {
@@ -272,7 +277,7 @@ extension TextLineType: Equatable {
         switch (lhs, rhs) {
         case (.text, .text):
             return true
-        case (.text, .text):
+        case (.localizedString, .localizedString):
             return true
         default:
             return false

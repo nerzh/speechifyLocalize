@@ -33,3 +33,13 @@ func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
     }
 }
 
+func writeFile(to: String, _ text: String) {
+    let fileDescriptor = open(to, O_TRUNC | O_WRONLY | O_CREAT, 0o755)
+
+    if fileDescriptor < 0 {
+        perror("could not open \(to)")
+    } else {
+        write(fileDescriptor, text, text.count)
+        close(fileDescriptor)
+    }
+}
