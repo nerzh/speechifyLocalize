@@ -11,15 +11,15 @@ import ArgumentParser
 final class ParserCore {
 
     let parser: Parser
-    private let fileManager: FileManager = .default
+    private let fileManager: FileManager
     private var localizableStrings: [String: String] = .init()
 
-    init(parser: Parser) {
+    init(parser: Parser, fileManager: FileManager = .default) {
         self.parser = parser
+        self.fileManager = fileManager
     }
 
     func run() throws {
-
         let currentStrings: [LocaleFolder] = getCurrentLocalizations(path: parser.localizationPath,
                                                                      localizedPrefix: parser.localizedPrefix)
 
@@ -37,17 +37,17 @@ final class ParserCore {
                                          _ stringPrefix: String
     ) {
         recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
+            var filePath: String = fileURL.path
+            if !isValidFileName(filePath) { return }
+
             if folderPath != localizationPath {
                 var resultText: String = .init()
-
                 readFile(fileURL) { (str) in
                     guard
                         let realProjectPath: String = try? realpath(projectPath)
                         else { return }
-                    var filePath: String = fileURL.path
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
-                    let pattern: String = "^([\\s\\S]*)\"\\S*\(stringPrefix)([\\s\\S]+)\\S*?\"([\\s\\S]*)$"
-                    let matches: [Int: String] = str.regexp(pattern)
+                    let matches: [Int: String] = str.regexp(StringForLocalizePattern(stringPrefix))
                     if matches[0] != nil {
                         if  let beforeValue = matches[1],
                             let value = matches[2],
@@ -82,7 +82,7 @@ final class ParserCore {
                 if (group.name ?? "") == key {
                     group.lines.forEach { (textLine) in
                         if result != nil { return }
-                        let matches: [Int: String] = textLine.text.regexp(#"^\"([\s\S]+)\"\s+=\s+\"([\s\S]+)\"\.*;\.*$"#)
+                        let matches: [Int: String] = textLine.text.regexp(LocalizableStringPattern)
                         if  let localizedKey: String = matches[1],
                             let localizedValue: String = matches[2]
                         {
@@ -131,27 +131,6 @@ final class ParserCore {
         return result
     }
 
-    private func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
-        var tempStore: [String: LocaleFolder] = .init()
-
-        recursiveReadDirectory(path: path) { (folderPath, filePath) in
-            var localeFolder: LocaleFolder = .init(path: folderPath)
-            if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
-            var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
-            readFile(filePath) { (str) in
-                localeFile.parseRawLocalizableString(str)
-            }
-            localeFolder.addLocaleFile(localeFile)
-            tempStore[localeFolder.path] = localeFolder
-        }
-
-        let result: [LocaleFolder] = tempStore.values.map { (localeFolder) -> LocaleFolder in
-            localeFolder
-        }
-
-        return result
-    }
-
     private func findNewLocalizeStrings(_ path: String,
                                         _ stringPrefix: String,
                                         _ localizationPath: String,
@@ -160,18 +139,18 @@ final class ParserCore {
         var tempStore: [String: FileGroup] = .init()
 
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
+            var filePath: String = fileURL.path
+            if !isValidFileName(filePath) { return }
             if folderPath != localizationPath {
                 readFile(fileURL) { (str) in
                     let line: String = str.trimmingCharacters(in: CharacterSet.init(arrayLiteral: "\n"))
                     guard let realProjectPath: String = try? realpath(path) else { return }
-                    var filePath: String = fileURL.path
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
                     if line["\(stringPrefix)"] {
                         let key: String = makeKeyFrom(path: filePath)
                         guard
-                            var value: String = line.regexp("\"\\S*(\(stringPrefix)[\\s\\S]+)\\S*?\"")[1]
+                            let value: String = line.regexp(StringForLocalizePattern(stringPrefix))[2]
                             else { return }
-                        value.replaceFirstSelf("\(stringPrefix)", "")
                         if tempStore[key] == nil {
                             tempStore[key] = .init(name: key, localizedPrefix: localizedPrefix)
                         }
@@ -189,13 +168,12 @@ final class ParserCore {
     }
 
     private func makeKeyFrom(path: String) -> String {
-        var key: String = path
-        key.replaceSelf(#"^/"#, "")
-        key.replaceSelf(#"/"#, ".")
-        let matches: [Int: String] = key.regexp(#"^([\s\S]+)\.([\s\S]+)$"#)
-        if matches[1] != nil && matches[2] != nil {
-            key = matches[1]!
-        }
+        var path: String = path
+        path.replaceSelf(#"^/"#, "")
+        path.replaceSelf(#"/"#, ".")
+        guard
+            let key = path.regexp(PathWithSwiftExtensionPattern)[1]
+            else { fatalError("Can not get key from path: \(path)") }
 
         return key
     }
@@ -204,31 +182,7 @@ final class ParserCore {
         filePath.replaceSelf(rooPath, "")
     }
 
-    private func readDirectory(path: String, _ handler: (URL) -> Void) {
-        fileManager.urls(for: path).forEach { handler($0) }
-    }
-
-    private func readDirectory(path: URL, _ handler: (URL) -> Void) {
-        readDirectory(path: path.path, handler)
-    }
-
-    private func recursiveReadDirectory(path: String, _ handler: (_ folder: String, _ file: URL) -> Void) {
-        readDirectory(path: path) { (url) in
-            if fileManager.isDirectory(url) {
-                recursiveReadDirectory(path: url.path, handler)
-            } else {
-                handler(path, url)
-            }
-        }
-    }
-
-    private func recursiveReadDirectory(path: URL, _ handler: (_ folder: URL, _ file: URL) -> Void) {
-        readDirectory(path: path) { (url) in
-            if fileManager.isDirectory(url) {
-                recursiveReadDirectory(path: url, handler)
-            } else {
-                handler(path, url)
-            }
-        }
+    private func isValidFileName(_ path: String) -> Bool {
+        path[PathWithSwiftExtensionPattern]
     }
 }

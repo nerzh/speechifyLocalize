@@ -13,7 +13,7 @@ struct Parser: ParsableCommand {
     @Option(default: FileManager.default.currentDirectoryPath, help: "Project path.")
     var projectPath: String
 
-    @Option(help: "Path to localizations.")
+    @Option(help: "Path to localizations")
     var localizationPath: String
 
     @Option(default: "localize.", help: "Prefix for raw strings")

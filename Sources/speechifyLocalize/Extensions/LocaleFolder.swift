@@ -256,7 +256,39 @@ struct TextLine: TextLineProtocol, Equatable {
     }
 
     private func makeKey(number: Int, key: String, localizedPrefix: String) -> String {
-        "\(key.clean()).\(localizedPrefix)_\(number)"
+        switch type {
+        case .localizedString:
+            return "\(key.clean()).\(localizedPrefix)_\(number)"
+        default:
+            return ""
+        }
+    }
+
+    func getValue() -> String {
+        switch type {
+        case .localizedString:
+            return value
+        default:
+            return ""
+        }
+    }
+
+    func getKey() -> String {
+        switch type {
+        case .localizedString:
+            return makeKey(number: number, key: clearKey, localizedPrefix: localizedPrefix)
+        default:
+            return ""
+        }
+    }
+
+    func getClearKey() -> String {
+        switch type {
+        case .localizedString:
+            return clearKey
+        default:
+            return ""
+        }
     }
 
     private mutating func makeText(key: String, value: String) {
