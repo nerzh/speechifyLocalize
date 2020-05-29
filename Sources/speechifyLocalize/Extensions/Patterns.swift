@@ -15,7 +15,17 @@ let CommentPattern: String = #"^\s*//\s*((?!MARK)[\s\S])+$"#
 
 let MarkPattern: String = #"^\s*//\s+MARK:.+"#
 
-let LprojNamePattern: String = #"([^/]+).lproj$"#
+let LprojNamePattern: String = #"([^/]+)\.lproj$"#
+
+let StringFilePattern: String = #"[\s\S]+\.strings$"#
+
+func lprojFolderNamePattern(_ lang: String) -> String {
+    "\(lang)\\.lproj$"
+}
+
+func csvElementPattern(_ separator: String) -> String {
+    "^\"([\\s\\S]+?)\"(\(separator)|$)"
+}
 
 func stringForLocalizePattern(_ stringPrefix: String) -> String {
     "^([\\s\\S]*)\"\\s*\(stringPrefix)\\.([\\s\\S]+)\\S*?\"([\\s\\S]*)$"

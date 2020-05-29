@@ -77,6 +77,7 @@ func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFo
     var tempStore: [String: LocaleFolder] = .init()
 
     recursiveReadDirectory(path: path) { (folderPath, filePath) in
+        if !filePath.path[StringFilePattern] { return }
         var localeFolder: LocaleFolder = .init(path: folderPath)
         if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
         var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
