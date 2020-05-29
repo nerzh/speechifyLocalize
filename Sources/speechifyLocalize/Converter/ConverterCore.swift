@@ -24,7 +24,11 @@ final class ConverterCore {
                             converter.separator
             ).run()
         case .importCSV:
-            try CSVImporter(converter.localizationPath, converter.tableFilePath).run()
+            try CSVImporter(converter.localizationPath,
+                            converter.tableFilePath,
+                            converter.localizedPrefix,
+                            converter.separator
+            ).run()
         }
     }
 }

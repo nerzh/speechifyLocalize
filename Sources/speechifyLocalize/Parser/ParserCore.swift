@@ -160,7 +160,7 @@ final class ParserCore {
                         if tempStore[key] == nil {
                             tempStore[key] = .init(name: key, localizedPrefix: localizedPrefix)
                         }
-                        tempStore[key]!.addTextLine(value: value)
+                        tempStore[key]!.addNextTextLine(value: value)
                     }
                 }
             }

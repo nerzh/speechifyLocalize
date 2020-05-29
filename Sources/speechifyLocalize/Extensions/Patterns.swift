@@ -35,6 +35,10 @@ func fileNameFromLocalizedStringPattern(_ localizedPrefix: String) -> String {
     "^.*\"([\\s\\S]+)\\.\(localizedPrefix)_\\d+.*?\"\\s+=\\s+.+"
 }
 
-func numberLocalizedString(_ localizedPrefix: String) -> String {
+func fileNameFromLocalizedKeyPattern(_ localizedPrefix: String) -> String {
+    "^([\\s\\S]+)\\.\(localizedPrefix)_\\d+$"
+}
+
+func numberLocalizedStringPattern(_ localizedPrefix: String) -> String {
     "\(localizedPrefix)_(\\d+)"
 }

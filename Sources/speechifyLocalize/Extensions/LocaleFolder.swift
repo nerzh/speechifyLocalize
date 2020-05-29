@@ -23,14 +23,28 @@ struct LocaleFolder {
 }
 
 struct LocaleFile {
+
     var path: String
     var localizedPrefix: String
-    var groups: [LineGroup] = .init()
+    var groups: [LineGroup] = .init() {
+        didSet {
+            for (index, group) in groups.enumerated() {
+                groupIndex[group.id] = index
+            }
+        }
+    }
+    private var groupIndex: [String: Int] = .init()
+
+    init(path: String, localizedPrefix: String) {
+        self.path = path
+        self.localizedPrefix = localizedPrefix
+    }
 
     mutating func addGroup(_ group: LineGroup) {
         var group: LineGroup = group
         group.number = groups.count
         groups.append(group)
+        groupIndex[group.id] = groups.count - 1
     }
 
     mutating func overrideGroup(_ group: LineGroup) {
@@ -40,7 +54,8 @@ struct LocaleFile {
     }
 
     func getGroup(by id: String) -> LineGroup? {
-        groups.first { $0.id == id }
+        guard let index = groupIndex[id] else { return nil }
+        return groups[index]
     }
 
     mutating func parseLocalizableString(_ string: String) {
@@ -75,7 +90,7 @@ struct LocaleFile {
     private func getNumberFromLocalizedString(_ string: String, _ localizedPrefix: String) -> String {
         let string: String = string.clean()
         guard
-            let number: String = string.regexp(numberLocalizedString(localizedPrefix))[1]
+            let number: String = string.regexp(numberLocalizedStringPattern(localizedPrefix))[1]
             else { fatalError("can not parse number from string: \(string) with prefix: \(localizedPrefix)") }
         return number
     }
@@ -96,7 +111,7 @@ struct LocaleFile {
 
 struct LineGroup {
 
-    var id: String
+    var id: String = .init()
     var name: String?
     var number: Int = .init()
     var lines: [TextLine] = .init()
@@ -107,15 +122,23 @@ struct LineGroup {
     init(name: String, localizedPrefix: String) {
         self.name = name.clean()
         self.localizedPrefix = localizedPrefix
-        self.id = .init()
-        guard let id = generateId(name) else { fatalError("Can not convert to SHA256") }
-        self.id = id
+        self.id = generateId(name)
     }
 
     init(text: String) {
-        self.id = .init()
-        guard let id = generateId(text) else { fatalError("Can not convert to SHA256") }
+        self.id = generateId(text)
         self.lines.append(TextLine(text: text))
+    }
+
+    mutating func addTextLine(value: String) {
+        guard let name = name else { return }
+        let textLine: TextLine = .init(number: nextNumber(), clearKey: name, localizedPrefix: localizedPrefix, value: value)
+        for currentTextLine in lines {
+            if currentTextLine.text == textLine.text {
+                return
+            }
+        }
+        lines.append(textLine)
     }
 
     mutating func addTextLine(number: Int, value: String) {
@@ -130,7 +153,7 @@ struct LineGroup {
         lines.append(textLine)
     }
 
-    mutating func addTextLine(value: String) {
+    mutating func addNextTextLine(value: String) {
         guard let name = name else { return }
         let textLine: TextLine = .init(number: nextNumber(), clearKey: name, localizedPrefix: localizedPrefix, value: value)
         for currentTextLine in lines {
@@ -171,8 +194,9 @@ struct LineGroup {
         }
     }
 
-    func generateId(_ name: String) -> String? {
-        name.toSHA256()
+    func generateId(_ name: String) -> String {
+        guard let id = name.toSHA256() else { fatalError("Can not convert to SHA256") }
+        return id
     }
 
     private func makeTextStrings() -> String {
