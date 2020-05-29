@@ -1,0 +1,17 @@
+
+// MARK: General
+
+"N.Q.file.String_1" = "Search";
+"N.Q.file.String_2" = "Search by nickname";
+"N.Q.file.String_3" = "Test localize string";
+"N.Q.file.String_4" = "Test localize string 2";
+"N.Q.file.String_5" = "Test localize string 3";
+"N.Q.file.String_6" = "Test localize string 5";
+
+"General.Cancel" = "Cancel";
+
+"1.String_1" = "Test localize string";
+"1.String_2" = "Test localize string 2";
+"1.String_33" = "Test localize string s";
+"1.String_4" = "Test localize string s2";
+"1.String_55" = "Super string";

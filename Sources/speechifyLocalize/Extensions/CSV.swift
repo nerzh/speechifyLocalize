@@ -31,7 +31,6 @@ struct CSVFile {
     subscript(rowKey: String) -> CSVRow {
         mutating get {
             if let index = rowKeys[rowKey] {
-                print(rows[index])
                 return rows[index]
             } else {
                 var row: CSVRow = .init()
@@ -44,7 +43,6 @@ struct CSVFile {
         }
         set {
             var newValue = newValue
-            print(newValue)
             if let index = rowKeys[rowKey] {
                 addColumns(index, &newValue)
                 addRowKey(index, key: newValue.first ?? "")
@@ -60,7 +58,7 @@ struct CSVFile {
 //        addRowKey(rows.count, key: row.first ?? "")
 //        rows.append(row)
 //    }
-
+//
 //    mutating func add(to column: String, _ value: String) {
 //        var row: CSVRow = .init()
 //        row.columns = columns

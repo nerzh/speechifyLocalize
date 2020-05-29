@@ -22,12 +22,15 @@ final class ParserCore {
     func run() throws {
         let currentStrings: [LocaleFolder] = getCurrentLocalizations(path: parser.localizationPath,
                                                                      localizedPrefix: parser.localizedPrefix)
-
-        let newStrings: [FileGroup] = try findNewLocalizeStrings(parser.projectPath,
+        
+        let newStrings: [LineGroup] = try findNewLocalizeStrings(parser.projectPath,
                                                                  parser.stringPrefix,
                                                                  parser.localizationPath,
                                                                  parser.localizedPrefix)
-        writeLocaleFiles(mergeLocalizedStrings(currentStrings, newStrings))
+
+        let newFolders: [LocaleFolder] = mergeLocalizedStrings(currentStrings, newStrings)
+
+        writeLocaleFiles(newFolders)
         replaceInsideSwiftFiles(parser.projectPath, parser.localizationPath, parser.localizedPrefix, parser.stringPrefix)
     }
 
@@ -47,7 +50,7 @@ final class ParserCore {
                         let realProjectPath: String = try? realpath(projectPath)
                         else { return }
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
-                    let matches: [Int: String] = str.regexp(StringForLocalizePattern(stringPrefix))
+                    let matches: [Int: String] = str.regexp(stringForLocalizePattern(stringPrefix))
                     if matches[0] != nil {
                         if  let beforeValue = matches[1],
                             let value = matches[2],
@@ -107,7 +110,6 @@ final class ParserCore {
                 }
                 localeFile.groups.forEach { (group) in
                     resultString.append(group.text)
-                    resultString.append("\n")
                 }
 
                 writeFile(to: localeFile.path, resultString)
@@ -115,13 +117,18 @@ final class ParserCore {
         }
     }
 
-    private func mergeLocalizedStrings(_ current: [LocaleFolder], _ new: [FileGroup]) -> [LocaleFolder] {
+    private func mergeLocalizedStrings(_ current: [LocaleFolder], _ new: [LineGroup]) -> [LocaleFolder] {
         var result: [LocaleFolder] = .init()
 
         for var localeFolder in current {
             for var localeFile in localeFolder.files {
-                for lineGroup in new {
-                    localeFile.addGroup(lineGroup)
+                for newLineGroup in new {
+                    if var currentLineGroup = localeFile.getGroup(by: newLineGroup.id) {
+                        currentLineGroup.merge(newLineGroup)
+                        localeFile.overrideGroup(currentLineGroup)
+                    } else {
+                        localeFile.addGroup(newLineGroup)
+                    }
                 }
                 localeFolder.addLocaleFile(localeFile)
             }
@@ -135,8 +142,8 @@ final class ParserCore {
                                         _ stringPrefix: String,
                                         _ localizationPath: String,
                                         _ localizedPrefix: String
-    ) throws -> [FileGroup] {
-        var tempStore: [String: FileGroup] = .init()
+    ) throws -> [LineGroup] {
+        var tempStore: [String: LineGroup] = .init()
 
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
             var filePath: String = fileURL.path
@@ -146,11 +153,10 @@ final class ParserCore {
                     let line: String = str.trimmingCharacters(in: CharacterSet.init(arrayLiteral: "\n"))
                     guard let realProjectPath: String = try? realpath(path) else { return }
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
-                    if line["\(stringPrefix)"] {
+                    let matches: [Int: String] = line.regexp(stringForLocalizePattern(stringPrefix))
+                    if matches[0] != nil {
                         let key: String = makeKeyFrom(path: filePath)
-                        guard
-                            let value: String = line.regexp(StringForLocalizePattern(stringPrefix))[2]
-                            else { return }
+                        guard let value: String = matches[2] else { return }
                         if tempStore[key] == nil {
                             tempStore[key] = .init(name: key, localizedPrefix: localizedPrefix)
                         }
@@ -160,7 +166,7 @@ final class ParserCore {
             }
         }
 
-        let result: [FileGroup] = tempStore.values.map { (fileGroup) -> FileGroup in
+        let result: [LineGroup] = tempStore.values.map { (fileGroup) -> LineGroup in
             fileGroup
         }
 

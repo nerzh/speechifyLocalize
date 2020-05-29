@@ -14,8 +14,8 @@ let package = Package(
                 .product(name: "SwiftRegularExpression", package: "SwiftRegularExpression"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]),
-//        .testTarget(
-//            name: "find-localizable-stringsTests",
-//            dependencies: ["find-localizable-strings"]),
+        .testTarget(
+            name: "speechifyLocalizeTests",
+            dependencies: ["speechifyLocalize"]),
     ]
 )

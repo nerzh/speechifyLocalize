@@ -7,19 +7,6 @@
 
 import Foundation
 
-protocol TextLineProtocol {
-    var text: String { get }
-}
-
-protocol LineGroupProtocol: TextLineProtocol {
-    var id: String { get set }
-    var name: String? { get set }
-    var number: Int { get set }
-    var lines: [TextLineProtocol] { get set }
-
-    mutating func merge(_ group: LineGroupProtocol)
-}
-
 struct LocaleFolder {
     var path: String
     var files: [LocaleFile] = .init()
@@ -38,33 +25,41 @@ struct LocaleFolder {
 struct LocaleFile {
     var path: String
     var localizedPrefix: String
-    var groups: [LineGroupProtocol] = .init()
+    var groups: [LineGroup] = .init()
 
-    mutating func addGroup(_ group: LineGroupProtocol) {
-        var group: LineGroupProtocol = group
-        if var lineGroup: LineGroupProtocol = getGroup(by: group.id) {
-            lineGroup.merge(group)
-            groups[lineGroup.number] = lineGroup
-            return
-        }
+    mutating func addGroup(_ group: LineGroup) {
+        var group: LineGroup = group
         group.number = groups.count
         groups.append(group)
     }
 
-    func getGroup(by id: String) -> LineGroupProtocol? {
+    mutating func overrideGroup(_ group: LineGroup) {
+        if let lineGroup: LineGroup = getGroup(by: group.id) {
+            groups[lineGroup.number] = group
+        }
+    }
+
+    func getGroup(by id: String) -> LineGroup? {
         groups.first { $0.id == id }
     }
 
-    mutating func parseRawLocalizableString(_ string: String) {
+    mutating func parseLocalizableString(_ string: String) {
         if isLocalizedString(string, localizedPrefix) {
             guard let number: Int = Int(getNumberFromLocalizedString(string, localizedPrefix)) else { return }
             let clearKey: String = getFileNameFromLocalizedString(string, localizedPrefix)
             let value: String = getValueFromLocalizedString(string)
-            var fileGroup: FileGroup = .init(name: clearKey, localizedPrefix: localizedPrefix)
-            fileGroup.addTextLine(number: number, value: value)
-            addGroup(fileGroup)
+            var newGroup: LineGroup = .init(name: clearKey, localizedPrefix: localizedPrefix)
+            newGroup.addTextLine(number: number, value: value)
+            if var lineGroup = getGroup(by: newGroup.id) {
+                lineGroup.merge(newGroup) { (_, _) -> Int in
+                    number
+                }
+                overrideGroup(lineGroup)
+            } else {
+                addGroup(newGroup)
+            }
         } else {
-            let lineGroup: TextGroup = .init(text: string)
+            let lineGroup: LineGroup = .init(text: string)
             addGroup(lineGroup)
         }
     }
@@ -72,7 +67,7 @@ struct LocaleFile {
     private func getFileNameFromLocalizedString(_ string: String, _ localizedPrefix: String) -> String {
         let string: String = string.clean()
         guard
-            let fileName = string.regexp("^.*\"([\\s\\S]+)\\.\(localizedPrefix)_\\d+.*?\"\\s+=\\s+.+")[1]
+            let fileName: String = string.regexp(fileNameFromLocalizedStringPattern(localizedPrefix))[1]
             else { fatalError("can not parse file name from string: \(string)") }
         return fileName
     }
@@ -80,7 +75,7 @@ struct LocaleFile {
     private func getNumberFromLocalizedString(_ string: String, _ localizedPrefix: String) -> String {
         let string: String = string.clean()
         guard
-            let number = string.regexp("\(localizedPrefix)_(\\d+)")[1]
+            let number: String = string.regexp(numberLocalizedString(localizedPrefix))[1]
             else { fatalError("can not parse number from string: \(string) with prefix: \(localizedPrefix)") }
         return number
     }
@@ -88,9 +83,9 @@ struct LocaleFile {
     private func getValueFromLocalizedString(_ string: String) -> String {
         let string: String = string.clean()
         guard
-            let number = string.regexp(#"^[\s\S]+\s=\s\"([\s\S]+)\".*;$"#)[1]
+            let value: String = string.regexp(LocalizableStringPattern)[2]
             else { fatalError("can not parse value from string: \(string)") }
-        return number
+        return value
     }
 
     private func isLocalizedString(_ string: String, _ localizedPrefix: String) -> Bool {
@@ -99,15 +94,15 @@ struct LocaleFile {
     }
 }
 
-struct FileGroup: LineGroupProtocol {
+struct LineGroup {
 
     var id: String
     var name: String?
     var number: Int = .init()
-    var lines: [TextLineProtocol] = .init()
+    var lines: [TextLine] = .init()
     var text: String { makeTextStrings() }
-    var localizedPrefix: String
-    private var lastNumber: Int = 0
+    var localizedPrefix: String = .init()
+    var lastNumber: Int = 0
 
     init(name: String, localizedPrefix: String) {
         self.name = name.clean()
@@ -115,6 +110,12 @@ struct FileGroup: LineGroupProtocol {
         self.id = .init()
         guard let id = generateId(name) else { fatalError("Can not convert to SHA256") }
         self.id = id
+    }
+
+    init(text: String) {
+        self.id = .init()
+        guard let id = generateId(text) else { fatalError("Can not convert to SHA256") }
+        self.lines.append(TextLine(text: text))
     }
 
     mutating func addTextLine(number: Int, value: String) {
@@ -140,27 +141,32 @@ struct FileGroup: LineGroupProtocol {
         lines.append(textLine)
     }
 
-    mutating func merge(_ group: LineGroupProtocol) {
-        let valuePattern: String = #"^\".+\"\s+=\s+\"([\s\S]+)\";$"#
+    mutating func merge(_ group: LineGroup,
+                        _ calcNumber: ((LineGroup, LineGroup) -> Int)? = nil
+    ) {
         var newValues: [String] = .init()
 
         if id == group.id {
             group.lines.forEach { (textLine) in
-                if let newValue = textLine.text.clean().regexp(valuePattern)[1] {
+                if let newValue = textLine.text.clean().regexp(LocalizableStringPattern)[2] {
                     var trigger: Bool = true
                     for currentTextLine in lines {
-                        if let currentValue = currentTextLine.text.clean().regexp(valuePattern)[1] {
+                        if let currentValue = currentTextLine.text.clean().regexp(LocalizableStringPattern)[2] {
                             if currentValue == newValue {
                                 trigger = false
                             }
                         }
                     }
-                    if trigger { newValues.append(newValue) }
+                    if trigger {
+                        var newNumber: Int = .init()
+                        if let calcNumber = calcNumber {
+                            newNumber = calcNumber(self, group)
+                        } else {
+                            newNumber = nextNumber()
+                        }
+                        addTextLine(number: newNumber, value: newValue)
+                    }
                 }
-            }
-
-            newValues.forEach { (value) in
-                addTextLine(number: nextNumber(), value: value)
             }
         }
     }
@@ -169,25 +175,15 @@ struct FileGroup: LineGroupProtocol {
         name.toSHA256()
     }
 
-    private func addMARK(_ string: String) -> String {
-        var result: String = .init()
-        let mark: String = "// MARK: \(name ?? "")\n\n"
-        if name != nil, !string["// MARK: \(name ?? "")"] {
-
-            result.append(mark)
-            result.append(string)
-        }
-
-        return result
-    }
-
     private func makeTextStrings() -> String {
         var result: String = .init()
 
-        lines.sorted { $0.text < $1.text }.forEach { (textLine) in
-            result.append(textLine.text)
+        for (index, textLine) in lines.sorted { $0.text < $1.text }.enumerated() {
+            result.append("\(textLine.text.clean())\n")
+            if textLine.type == .localizedString && index == lines.count - 1 {
+                result.append("\n")
+            }
         }
-//        result = addMARK(result)
 
         return result
     }
@@ -198,48 +194,13 @@ struct FileGroup: LineGroupProtocol {
     }
 }
 
-struct TextGroup: LineGroupProtocol {
-
-    var id: String
-    var name: String?
-    var number: Int = .init()
-    var lines: [TextLineProtocol] = .init()
-    var text: String
-
-    init(text: String) {
-        self.text = text
-        guard let id = text.toSHA256() else { fatalError("Can not convert to SHA256") }
-        self.id = id
-        self.lines.append(TextLine(text: text))
-    }
-
-    mutating func addTextLine(value: String) {
-        text = value
-        guard let id = text.toSHA256() else { fatalError("Can not convert to SHA256") }
-        self.id = id
-        lines.append(TextLine(text: text))
-    }
-
-    mutating func merge(_ group: LineGroupProtocol) {
-        group.lines.forEach { (textLineProtocol) in
-            if !lines.contains(where: { $0.text == textLineProtocol.text }) {
-                lines.append(textLineProtocol)
-            }
-        }
-    }
-}
-
-struct TextLine: TextLineProtocol, Equatable {
+struct TextLine: Equatable {
 
     private var clearKey: String = .init()
     private var value: String = .init()
     private var localizedPrefix: String = .init()
-    var number: Int = .init() {
-        didSet {
-            makeText(key: clearKey, value: value)
-        }
-    }
-    var text: String = .init()
+    var number: Int = .init()
+    var text: String { makeText(key: clearKey, value: value) }
     var type: TextLineType = .text
 
     init(number: Int, clearKey: String, localizedPrefix: String, value: String, type: TextLineType = .localizedString) {
@@ -248,11 +209,10 @@ struct TextLine: TextLineProtocol, Equatable {
         self.clearKey = clearKey
         self.localizedPrefix = localizedPrefix
         self.type = type
-        makeText(key: clearKey, value: value)
     }
 
     init(text: String) {
-        self.text = text
+        self.value = text
     }
 
     private func makeKey(number: Int, key: String, localizedPrefix: String) -> String {
@@ -265,12 +225,7 @@ struct TextLine: TextLineProtocol, Equatable {
     }
 
     func getValue() -> String {
-        switch type {
-        case .localizedString:
-            return value
-        default:
-            return ""
-        }
+        value
     }
 
     func getKey() -> String {
@@ -291,9 +246,14 @@ struct TextLine: TextLineProtocol, Equatable {
         }
     }
 
-    private mutating func makeText(key: String, value: String) {
-        let key = makeKey(number: number, key: clearKey, localizedPrefix: localizedPrefix)
-        text = "\"\(key)\" = \"\(value)\";\n"
+    private func makeText(key: String, value: String) -> String {
+        switch type {
+        case .localizedString:
+            let key = makeKey(number: number, key: clearKey, localizedPrefix: localizedPrefix)
+            return "\"\(key)\" = \"\(value)\";\n"
+        default:
+            return value
+        }
     }
 }
 

@@ -10,7 +10,7 @@ import Foundation
 func realpath(_ path: String) throws -> String {
     let pointer: UnsafeMutablePointer<Int8>? = realpath(path, nil)
     guard
-        let cStringPointer = pointer
+        let cStringPointer: UnsafeMutablePointer<Int8> = pointer
         else { throw fatalError("unknown error for path: \(path)\nPlease, check your path.\n") }
     defer { free(cStringPointer) }
     return String(cString: cStringPointer)
@@ -53,7 +53,7 @@ func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
     do {
         try file.open()
         defer { file.close() }
-        while let line = try? file.readLine() {
+        while let line: String = try? file.readLine() {
             handler(line)
         }
     } catch let error {
@@ -67,7 +67,8 @@ func writeFile(to: String, _ text: String) {
     if fileDescriptor < 0 {
         perror("could not open \(to)")
     } else {
-        write(fileDescriptor, text, text.count)
+        guard let size: Int = text.data(using: .utf8)?.count else { return }
+        write(fileDescriptor, text, size)
         close(fileDescriptor)
     }
 }
@@ -80,7 +81,7 @@ func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFo
         if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
         var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
         readFile(filePath) { (str) in
-            localeFile.parseRawLocalizableString(str)
+            localeFile.parseLocalizableString(str)
         }
         localeFolder.addLocaleFile(localeFile)
         tempStore[localeFolder.path] = localeFolder

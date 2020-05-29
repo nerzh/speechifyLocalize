@@ -1,7 +1,7 @@
 import XCTest
 
-import find_localizable_stringsTests
+import speechifyLocalizeTests
 
 var tests = [XCTestCaseEntry]()
-tests += find_localizable_stringsTests.allTests()
+tests += speechifyLocalizeTests.allTests()
 XCTMain(tests)
