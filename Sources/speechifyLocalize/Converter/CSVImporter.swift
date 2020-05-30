@@ -148,7 +148,7 @@ struct LocaleContainer: Sequence {
 
     subscript(key: String) -> String {
         get {
-            localizedStrings[index[key]!].key
+            localizedStrings[index[key]!].value
         }
         set {
             index[key] = localizedStrings.count
