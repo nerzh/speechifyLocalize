@@ -167,8 +167,6 @@ struct LineGroup {
     mutating func merge(_ group: LineGroup,
                         _ calcNumber: ((LineGroup, LineGroup) -> Int)? = nil
     ) {
-        var newValues: [String] = .init()
-
         if id == group.id {
             group.lines.forEach { (textLine) in
                 if let newValue = textLine.text.clean().regexp(LocalizableStringPattern)[2] {
