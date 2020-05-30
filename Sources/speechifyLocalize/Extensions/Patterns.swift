@@ -26,7 +26,7 @@ func lprojFolderNamePattern(_ lang: String) -> String {
 }
 
 func csvElementPattern(_ separator: String) -> String {
-    "^\"([\\s\\S]+?)\"(\(separator)|$)"
+    "((\"[\\s\\S]+?\")|([\\s\\S]+?))(\(separator)|$)"
 }
 
 func stringForLocalizePattern(_ stringPrefix: String) -> String {
