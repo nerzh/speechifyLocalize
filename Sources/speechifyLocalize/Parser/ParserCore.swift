@@ -37,6 +37,10 @@ final class ParserCore {
                                 parser.stringPrefix,
                                 parser.methodPrefix)
     }
+}
+
+// MARK: PRIVATE METHODS
+extension ParserCore {
 
     private func replaceInsideSwiftFiles(_ projectPath: String,
                                          _ localizationPath: String,

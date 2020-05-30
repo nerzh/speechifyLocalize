@@ -8,7 +8,7 @@
 import Foundation
 import SwiftRegularExpression
 
-class CSVExporter {
+final class CSVExporter {
 
     let localizationPath: String
     let tableFilePath: String
@@ -27,7 +27,12 @@ class CSVExporter {
     func run() throws {
         convert(localizationPath, tableFilePath)
     }
+}
 
+
+// MARK: PRIVATE METHODS
+extension CSVExporter {
+    
     private func convert(_ localizationPath: String, _ tableFilePath: String) {
         let currentLocales: [LocaleFolder] = getCurrentLocalizations(path: localizationPath, localizedPrefix: localizedPrefix)
         var csvFile: CSVFile = .init(separator: separator)

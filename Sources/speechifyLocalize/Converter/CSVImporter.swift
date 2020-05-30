@@ -7,7 +7,7 @@
 
 import Foundation
 
-class CSVImporter {
+final class CSVImporter {
 
     let localizationPath: String
     let tableFilePath: String
@@ -30,6 +30,11 @@ class CSVImporter {
         let csvFile: CSVFile = CSVFile(separator: separator, filePath: tableFilePath)
         importFromCSV(csvFile)
     }
+}
+
+
+// MARK: PRIVATE METHODS
+extension CSVImporter {
 
     private func importFromCSV(_ file: CSVFile) {
         addNewLocales(from: file)
@@ -141,6 +146,8 @@ class CSVImporter {
     }
 }
 
+
+// MARK: CONTAINER FOR STRINGS OF LOCALE
 struct LocaleContainer: Sequence {
 
     private var index: [String: Int] = .init()
