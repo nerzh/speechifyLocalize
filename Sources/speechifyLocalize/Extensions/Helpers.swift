@@ -21,7 +21,7 @@ func realpath(_ url: URL) throws -> String {
 }
 
 func readDirectory(path: String, _ handler: (URL) -> Void) {
-    FileManager.default.urls(for: path).forEach { handler($0) }
+    FileManager.default.urls(for: urlEncode(path)).forEach { handler($0) }
 }
 
 func readDirectory(path: URL, _ handler: (URL) -> Void) {
@@ -103,4 +103,11 @@ func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
 
 func makeLocalizableString(_ key: String, _ value: String) -> String {
     "\"\(key)\" = \"\(value)\";"
+}
+
+func urlEncode(_ string: String) -> String {
+    var allowedCharacters = CharacterSet.alphanumerics
+    allowedCharacters.insert(charactersIn: ".-_")
+
+    return string.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
 }
