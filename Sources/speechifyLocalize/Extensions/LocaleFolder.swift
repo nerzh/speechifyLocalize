@@ -274,7 +274,7 @@ struct TextLine: Equatable {
         switch type {
         case .localizedString:
             let key = makeKey(number: number, key: clearKey, localizedPrefix: localizedPrefix)
-            return "\"\(key)\" = \"\(value)\";\n"
+            return "\(makeLocalizableString(key, value))\n"
         default:
             return value
         }

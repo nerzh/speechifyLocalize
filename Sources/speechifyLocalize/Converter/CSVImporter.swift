@@ -14,6 +14,7 @@ class CSVImporter {
     let localizedPrefix: String
     let separator: String
 
+    private var newLocales: Set<String> = .init()
     private let keyName: String = "[key]"
     private let localeFolderExt: String = "lproj"
     private let localeFileName: String = "Localizable.strings"
@@ -31,61 +32,94 @@ class CSVImporter {
     }
 
     private func importFromCSV(_ file: CSVFile) {
-        let localeFiles: [LocaleFile] = parseCSVFile(file)
+        addNewLocales(from: file)
+        updateStrings(from: file)
+        updateNewLocalizationsStrings(from: file)
+    }
 
-        localeFiles.forEach { (lf) in
-            lf.groups.forEach { (g) in
-                print(g.text)
+    private func updateStrings(from file: CSVFile) {
+        let stringsFromCSV: [String: LocaleContainer] = parseCSVFile(file)
+
+        findStringsFiles(form: localizationPath) { (folderPath, fileURL) in
+            guard let localeName: String = folderPath.regexp(LprojNamePattern)[1] else { return }
+            var newText: String = .init()
+            readFile(fileURL) { (str) in
+                let matches: [Int: String] = str.regexp(LocalizableStringPattern)
+                if let key: String = matches[1] {
+                    if let localeContainer = stringsFromCSV[localeName], localeContainer.isExistKey(key) {
+                        newText.append(makeLocalizableString(key, localeContainer[key]))
+                        newText.append("\n")
+                        return
+                    }
+                }
+                newText.append(str)
             }
+
+            writeFile(to: fileURL.path, newText)
         }
     }
 
-    private func parseCSVFile(_ file: CSVFile) -> [LocaleFile] {
-        var localeFiles: [LocaleFile] = .init()
+    private func updateNewLocalizationsStrings(from file: CSVFile) {
+        let stringsFromCSV: [String: LocaleContainer] = parseCSVFile(file)
+
+        findStringsFiles(form: localizationPath) { (folderPath, fileURL) in
+            guard
+                let localeName: String = folderPath.regexp(LprojNamePattern)[1],
+                newLocales.contains(localeName)
+                else { return }
+            var newText: String = .init()
+            stringsFromCSV[localeName]?.forEach({ (pair) in
+                newText.append(makeLocalizableString(pair.key, pair.value))
+                newText.append("\n")
+            })
+
+            writeFile(to: fileURL.path, newText)
+        }
+    }
+
+    private func parseCSVFile(_ file: CSVFile) -> [String: LocaleContainer] {
+        var localeStrings: [String: LocaleContainer] = .init()
         file.columns().forEach { (columnName) in
             if columnName == keyName { return }
-            let folderPath: String = makeLocaleDir(columnName, localizationPath)
-            var localeFile: LocaleFile = .init(path: makeLocaleFilePath(folderPath), localizedPrefix: localizedPrefix)
-            if !isPresentLocale(folderPath) {
-                createNewLocale(folderPath)
-            }
             var isFirstLine: Bool = true
             file.rows.forEach { (row) in
                 if isFirstLine { isFirstLine = false; return }
                 let key: String = row[keyName]
                 let value: String = row[columnName]
-
-                if  let groupName: String = key.regexp(fileNameFromLocalizedKeyPattern(localizedPrefix))[1],
-                    let strNumber: String = key.regexp(numberLocalizedStringPattern(localizedPrefix))[1],
-                    let textLineNumber: Int = Int(strNumber)
-                {
-                    var lineGroup: LineGroup = .init(name: groupName, localizedPrefix: localizedPrefix)
-                    if var existGroup = localeFile.getGroup(by: lineGroup.id) {
-                        existGroup.addTextLine(number: textLineNumber, value: value)
-                        localeFile.overrideGroup(existGroup)
-                    } else {
-                        lineGroup.addTextLine(number: textLineNumber, value: value)
-                        localeFile.addGroup(lineGroup)
-                    }
-                } else {
-                    var lineGroup: LineGroup = .init(name: groupName)
-                    if var existGroup = localeFile.getGroup(by: lineGroup.id) {
-                        existGroup.addTextLine(number: textLineNumber, value: value)
-                        localeFile.overrideGroup(existGroup)
-                    } else {
-                        lineGroup.addTextLine(number: textLineNumber, value: value)
-                        localeFile.addGroup(lineGroup)
-                    }
-                }
+                if localeStrings[columnName] == nil { localeStrings[columnName] = .init() }
+                localeStrings[columnName]!.addPair(key, value)
             }
-            localeFiles.append(localeFile)
         }
 
-        return localeFiles
+        return localeStrings
     }
 
     private func isPresentLocale(_ folderPath: String) -> Bool {
         FileManager.default.fileExists(atPath: folderPath)
+    }
+
+    private func addNewLocales(from file: CSVFile) {
+        checkNewLocales(from: file)
+        createNewLocales(from: newLocales)
+    }
+
+    private func checkNewLocales(from file: CSVFile) {
+        file.columns().forEach { (columnName) in
+            if columnName == keyName { return }
+            let folderPath: String = makeLocaleDir(columnName, localizationPath)
+            if !isPresentLocale(folderPath) {
+                newLocales.insert(columnName)
+            }
+        }
+    }
+
+    private func createNewLocales(from newLocales: Set<String>) {
+        newLocales.forEach { (columnName) in
+            let folderPath: String = makeLocaleDir(columnName, localizationPath)
+            if !isPresentLocale(folderPath) {
+                createNewLocale(folderPath)
+            }
+        }
     }
 
     private func createNewLocale(_ folderPath: String) {
@@ -107,9 +141,31 @@ class CSVImporter {
     }
 }
 
+struct LocaleContainer: Sequence {
 
+    private var index: [String: Int] = .init()
+    private var localizedStrings: [(key: String, value: String)] = .init()
 
+    subscript(key: String) -> String {
+        get {
+            localizedStrings[index[key]!].key
+        }
+        set {
+            index[key] = localizedStrings.count
+            localizedStrings.append((key, newValue))
+        }
+    }
 
+    func isExistKey(_ key: String) -> Bool {
+        index[key] != nil
+    }
 
+    mutating func addPair(_ key: String, _ value: String) {
+        index[key] = localizedStrings.count
+        localizedStrings.append((key, value))
+    }
 
-
+    func makeIterator() -> Array<(key: String, value: String)>.Iterator {
+        localizedStrings.makeIterator()
+    }
+}

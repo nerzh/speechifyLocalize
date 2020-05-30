@@ -76,12 +76,11 @@ func writeFile(to: String, _ text: String) {
 func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
     var tempStore: [String: LocaleFolder] = .init()
 
-    recursiveReadDirectory(path: path) { (folderPath, filePath) in
-        if !filePath.path[StringFilePattern] { return }
+    findStringsFiles(form: path) { (folderPath, fileURL) in
         var localeFolder: LocaleFolder = .init(path: folderPath)
         if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
-        var localeFile: LocaleFile = .init(path: filePath.path, localizedPrefix: localizedPrefix)
-        readFile(filePath) { (str) in
+        var localeFile: LocaleFile = .init(path: fileURL.path, localizedPrefix: localizedPrefix)
+        readFile(fileURL) { (str) in
             localeFile.parseLocalizableString(str)
         }
         localeFolder.addLocaleFile(localeFile)
@@ -95,3 +94,13 @@ func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFo
     return result
 }
 
+func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
+    recursiveReadDirectory(path: directory) { (folderPath, fileURL) in
+        if !fileURL.path[StringFilePattern] { return }
+        handle(folderPath, fileURL)
+    }
+}
+
+func makeLocalizableString(_ key: String, _ value: String) -> String {
+    "\"\(key)\" = \"\(value)\";"
+}

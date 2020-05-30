@@ -17,6 +17,8 @@ let MarkPattern: String = #"^\s*//\s+MARK:.+"#
 
 let LprojNamePattern: String = #"([^/]+)\.lproj$"#
 
+let FileNamePattern: String = #"([^/]+)$"#
+
 let StringFilePattern: String = #"[\s\S]+\.strings$"#
 
 func lprojFolderNamePattern(_ lang: String) -> String {
