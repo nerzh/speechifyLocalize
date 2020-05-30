@@ -22,6 +22,9 @@ struct Parser: ParsableCommand {
     @Option(default: "String", help: "Prefix for localized strings")
     var localizedPrefix: String
 
+    @Option(default: "localized", help: "Method for localizable strings")
+    var methodPrefix: String
+
     func run() throws {
         try ParserCore(parser: self).run()
     }

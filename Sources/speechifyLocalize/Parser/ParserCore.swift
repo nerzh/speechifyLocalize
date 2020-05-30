@@ -31,13 +31,18 @@ final class ParserCore {
         let newFolders: [LocaleFolder] = mergeLocalizedStrings(currentStrings, newStrings)
 
         writeLocaleFiles(newFolders)
-        replaceInsideSwiftFiles(parser.projectPath, parser.localizationPath, parser.localizedPrefix, parser.stringPrefix)
+        replaceInsideSwiftFiles(parser.projectPath,
+                                parser.localizationPath,
+                                parser.localizedPrefix,
+                                parser.stringPrefix,
+                                parser.methodPrefix)
     }
 
     private func replaceInsideSwiftFiles(_ projectPath: String,
                                          _ localizationPath: String,
                                          _ localizedPrefix: String,
-                                         _ stringPrefix: String
+                                         _ stringPrefix: String,
+                                         _ methodPrefix: String
     ) {
         recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
             var filePath: String = fileURL.path
@@ -57,7 +62,7 @@ final class ParserCore {
                             let afterValue = matches[3]
                         {
                             if let localizedKey: String = findLocalizedString(projectPath, localizedPrefix, filePath, value) {
-                                let newLine = str.replace("^[\\s\\S]+$", "\(beforeValue)\"\(localizedKey)\".localize\(afterValue)")
+                                let newLine = str.replace("^[\\s\\S]+$", "\(beforeValue)\"\(localizedKey)\".\(methodPrefix)\(afterValue)")
                                 resultText.append(newLine)
                             }
                             return
