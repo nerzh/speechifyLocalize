@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import SwiftRegularExpression
+
 
 func realpath(_ path: String) throws -> String {
     let pointer: UnsafeMutablePointer<Int8>? = realpath(path, nil)
@@ -110,4 +112,80 @@ func urlEncode(_ string: String) -> String {
     allowedCharacters.insert(charactersIn: ".-_")
 
     return string.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
+}
+
+func makeRelativePath(from projectPath: String, to filePath: String) -> String? {
+    guard let realProjectPath: String = try? realpath(projectPath) else { return nil }
+    return filePath.replace(realProjectPath, "")
+}
+
+func isValidSwiftFileName(_ path: String) -> Bool {
+    path[PathWithSwiftExtensionPattern]
+}
+
+func makeKeyFrom(path: String) -> String {
+    var path: String = path
+    path.replaceSelf(#"^/"#, "")
+    path.replaceSelf(#"/"#, ".")
+    guard
+        let key = path.regexp(PathWithSwiftExtensionPattern)[1]
+        else { fatalError("Can not get key from path: \(path). Maybe it is not swift file ?") }
+
+    return key
+}
+
+func makeKeyFrom(_ projectPath: String, _ filePath: String) -> String? {
+    guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: filePath) else { return nil }
+
+    return makeKeyFrom(path: relativeFilePath)
+}
+
+
+func getDataFromLocalizationString(_ string: String, _ handler: () -> Void) {
+
+}
+
+func getDataFromFileLocalizedString(_ string: String,
+                                    _ localizedPrefix: String,
+                                    _ methodPrefix: String,
+                                    _ handler: (_ clearKey: String, _ number: Int) -> Void
+) {
+    let matches: [Int: String] = string.regexp(fileLocalizedStringPattern(localizedPrefix, methodPrefix))
+    guard
+        let clearKey: String = matches[1],
+        let strNumber: String = matches[2],
+        let number: Int = Int(strNumber)
+        else { return }
+    handler(clearKey, number)
+}
+
+func getDataFromAnyLocalizedKey(_ string: String,
+                                _ localizedPrefix: String,
+                                _ handler: (_ clearKey: String, _ number: Int) -> Void
+) {
+    let matches: [Int: String] = string.regexp(localizedKeyItemsPattern(localizedPrefix))
+    guard
+        let clearKey: String = matches[1],
+        let strNumber: String = matches[2],
+        let number: Int = Int(strNumber)
+        else { return }
+    handler(clearKey, number)
+}
+
+
+func cleanFile(path: String) {
+    guard let fileURL: URL = URL(string: path) else { return }
+    var newText: String = .init()
+    var newLineCount: Int = .init()
+    readFile(fileURL) { (line) in
+        if line.clean().count == 0 {
+            newLineCount += 1
+            if newLineCount > 2 { return }
+        } else {
+            newLineCount = 0
+        }
+        newText.append(line)
+    }
+
+    writeFile(to: path, newText)
 }

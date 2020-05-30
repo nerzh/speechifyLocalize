@@ -82,7 +82,7 @@ struct LocaleFile {
     private func getFileNameFromLocalizedString(_ string: String, _ localizedPrefix: String) -> String {
         let string: String = string.clean()
         guard
-            let fileName: String = string.regexp(fileNameFromLocalizedStringPattern(localizedPrefix))[1]
+            let fileName: String = string.regexp(localizedStringItemsPattern(localizedPrefix))[1]
             else { fatalError("can not parse file name from string: \(string)") }
         return fileName
     }

@@ -49,23 +49,19 @@ extension ParserCore {
                                          _ methodPrefix: String
     ) {
         recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
-            var filePath: String = fileURL.path
-            if !isValidFileName(filePath) { return }
+            guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: fileURL.path) else { return }
+            if !isValidSwiftFileName(relativeFilePath) { return }
 
             if folderPath != localizationPath {
                 var resultText: String = .init()
                 readFile(fileURL) { (str) in
-                    guard
-                        let realProjectPath: String = try? realpath(projectPath)
-                        else { return }
-                    deleteProjectPath(rooPath: realProjectPath, &filePath)
                     let matches: [Int: String] = str.regexp(stringForLocalizePattern(stringPrefix))
                     if matches[0] != nil {
                         if  let beforeValue = matches[1],
                             let value = matches[2],
                             let afterValue = matches[3]
                         {
-                            if let localizedKey: String = findLocalizedString(projectPath, localizedPrefix, filePath, value) {
+                            if let localizedKey: String = findLocalizedString(projectPath, localizedPrefix, relativeFilePath, value) {
                                 let newLine = str.replace("^[\\s\\S]+$", "\(beforeValue)\"\(localizedKey)\".\(methodPrefix)\(afterValue)")
                                 resultText.append(newLine)
                             }
@@ -75,6 +71,7 @@ extension ParserCore {
                     resultText.append(str)
                 }
                 writeFile(to: fileURL.path, resultText)
+                cleanFile(path: fileURL.path)
             }
         }
     }
@@ -122,6 +119,7 @@ extension ParserCore {
                 }
 
                 writeFile(to: localeFile.path, resultString)
+                cleanFile(path: localeFile.path)
             }
         }
     }
@@ -156,7 +154,7 @@ extension ParserCore {
 
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
             var filePath: String = fileURL.path
-            if !isValidFileName(filePath) { return }
+            if !isValidSwiftFileName(filePath) { return }
             if folderPath != localizationPath {
                 readFile(fileURL) { (str) in
                     let line: String = str.trimmingCharacters(in: CharacterSet.init(arrayLiteral: "\n"))
@@ -181,23 +179,8 @@ extension ParserCore {
 
         return result
     }
-
-    private func makeKeyFrom(path: String) -> String {
-        var path: String = path
-        path.replaceSelf(#"^/"#, "")
-        path.replaceSelf(#"/"#, ".")
-        guard
-            let key = path.regexp(PathWithSwiftExtensionPattern)[1]
-            else { fatalError("Can not get key from path: \(path)") }
-
-        return key
-    }
-
+    
     private func deleteProjectPath(rooPath: String, _ filePath: inout String) {
         filePath.replaceSelf(rooPath, "")
-    }
-
-    private func isValidFileName(_ path: String) -> Bool {
-        path[PathWithSwiftExtensionPattern]
     }
 }
