@@ -123,7 +123,11 @@ func isValidSwiftFileName(_ path: String) -> Bool {
     path[PathWithSwiftExtensionPattern]
 }
 
-func makeKeyFrom(path: String) -> String {
+func isStringsFileName(_ path: String) -> Bool {
+    path[PathWithSwiftExtensionPattern]
+}
+
+func makeClearKeyFrom(path: String) -> String {
     var path: String = path
     path.replaceSelf(#"^/"#, "")
     path.replaceSelf(#"/"#, ".")
@@ -134,15 +138,14 @@ func makeKeyFrom(path: String) -> String {
     return key
 }
 
-func makeKeyFrom(_ projectPath: String, _ filePath: String) -> String? {
+func makeClearKeyFrom(_ projectPath: String, _ filePath: String) -> String? {
     guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: filePath) else { return nil }
 
-    return makeKeyFrom(path: relativeFilePath)
+    return makeClearKeyFrom(path: relativeFilePath)
 }
 
-
-func getDataFromLocalizationString(_ string: String, _ handler: () -> Void) {
-
+func makeNewKey(_ clearKey: String, _ localizedPrefix: String, _ number: Int) -> String {
+    "\(clearKey).\(localizedPrefix)_\(number)"
 }
 
 func getDataFromFileLocalizedString(_ string: String,
@@ -150,6 +153,7 @@ func getDataFromFileLocalizedString(_ string: String,
                                     _ methodPrefix: String,
                                     _ handler: (_ clearKey: String, _ number: Int) -> Void
 ) {
+    
     let matches: [Int: String] = string.regexp(fileLocalizedStringPattern(localizedPrefix, methodPrefix))
     guard
         let clearKey: String = matches[1],

@@ -84,7 +84,7 @@ extension ParserCore {
         var result: String?
         let currentStrings: [LocaleFolder] = getCurrentLocalizations(path: parser.localizationPath,
                                                                      localizedPrefix: parser.localizedPrefix)
-        let key: String = makeKeyFrom(path: filePath)
+        let key: String = makeClearKeyFrom(path: filePath)
         if let anyLocaleFile: LocaleFile = currentStrings.first?.files.first {
             anyLocaleFile.groups.forEach { (group) in
                 if result != nil { return }
@@ -162,7 +162,7 @@ extension ParserCore {
                     deleteProjectPath(rooPath: realProjectPath, &filePath)
                     let matches: [Int: String] = line.regexp(stringForLocalizePattern(stringPrefix))
                     if matches[0] != nil {
-                        let key: String = makeKeyFrom(path: filePath)
+                        let key: String = makeClearKeyFrom(path: filePath)
                         guard let value: String = matches[2] else { return }
                         if tempStore[key] == nil {
                             tempStore[key] = .init(name: key, localizedPrefix: localizedPrefix)
