@@ -7,7 +7,7 @@ git clone git@github.com:nerzh/speechifyLocalize.git
 
 cd speechifyLocalize
 
-swift buld -c release
+swift build -c release
 
 ./.build/x86_64-apple-macosx/release/speechifyLocalize
 ```
