@@ -20,8 +20,6 @@ let package = Package(
         .target(
             name: "speechifyLocalize",
             dependencies: [
-                .product(name: "SwiftRegularExpression", package: "SwiftRegularExpression"),
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .target(name: "SLLib")
             ]),
         .testTarget(
