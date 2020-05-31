@@ -8,7 +8,7 @@
 import Foundation
 import ArgumentParser
 
-struct Validator: ParsableCommand {
+public struct Validator: ParsableCommand {
 
     @Option(default: FileManager.default.currentDirectoryPath, help: "Project path.")
     var projectPath: String
@@ -22,7 +22,9 @@ struct Validator: ParsableCommand {
     @Option(default: "localized", help: "Method name for localizable strings")
     var methodPrefix: String
 
-    func run() throws {
+    public init() {}
+
+    public func run() throws {
         try ValidatorCore(validator: self).run()
     }
 }

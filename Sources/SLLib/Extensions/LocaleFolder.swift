@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct LocaleFolder {
+public struct LocaleFolder {
     var path: String
     var files: [LocaleFile] = .init()
 

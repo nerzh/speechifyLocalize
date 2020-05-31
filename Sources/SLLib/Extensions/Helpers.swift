@@ -9,28 +9,29 @@ import Foundation
 import SwiftRegularExpression
 
 
-func realpath(_ path: String) throws -> String {
+public func realpath(_ path: String) throws -> String {
     let pointer: UnsafeMutablePointer<Int8>? = realpath(path, nil)
     guard
         let cStringPointer: UnsafeMutablePointer<Int8> = pointer
         else { throw fatalError("unknown error for path: \(path)\nPlease, check your path.\n") }
     defer { free(cStringPointer) }
+
     return String(cString: cStringPointer)
 }
 
-func realpath(_ url: URL) throws -> String {
+public func realpath(_ url: URL) throws -> String {
     try realpath(url.path)
 }
 
-func readDirectory(path: String, _ handler: (URL) -> Void) {
+public func readDirectory(path: String, _ handler: (URL) -> Void) {
     FileManager.default.urls(for: urlEncode(path)).forEach { handler($0) }
 }
 
-func readDirectory(path: URL, _ handler: (URL) -> Void) {
+public func readDirectory(path: URL, _ handler: (URL) -> Void) {
     readDirectory(path: path.path, handler)
 }
 
-func recursiveReadDirectory(path: String, _ handler: (_ folder: String, _ file: URL) -> Void) {
+public func recursiveReadDirectory(path: String, _ handler: (_ folder: String, _ file: URL) -> Void) {
     readDirectory(path: path) { (url) in
         if FileManager.default.isDirectory(url) {
             recursiveReadDirectory(path: url.path, handler)
@@ -40,7 +41,7 @@ func recursiveReadDirectory(path: String, _ handler: (_ folder: String, _ file: 
     }
 }
 
-func recursiveReadDirectory(path: URL, _ handler: (_ folder: URL, _ file: URL) -> Void) {
+public func recursiveReadDirectory(path: URL, _ handler: (_ folder: URL, _ file: URL) -> Void) {
     readDirectory(path: path) { (url) in
         if FileManager.default.isDirectory(url) {
             recursiveReadDirectory(path: url, handler)
@@ -50,7 +51,7 @@ func recursiveReadDirectory(path: URL, _ handler: (_ folder: URL, _ file: URL) -
     }
 }
 
-func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
+public func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
     let file: FileReader = .init(fileURL: fileURL)
     do {
         try file.open()
@@ -63,7 +64,7 @@ func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
     }
 }
 
-func writeFile(to: String, _ text: String) {
+public func writeFile(to: String, _ text: String) {
     let fileDescriptor = open(to, O_TRUNC | O_WRONLY | O_CREAT, 0o755)
 
     if fileDescriptor < 0 {
@@ -75,7 +76,7 @@ func writeFile(to: String, _ text: String) {
     }
 }
 
-func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
+public func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
     var tempStore: [String: LocaleFolder] = .init()
 
     findStringsFiles(form: path) { (folderPath, fileURL) in
@@ -96,38 +97,38 @@ func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFo
     return result
 }
 
-func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
+public func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
     recursiveReadDirectory(path: directory) { (folderPath, fileURL) in
         if !fileURL.path[StringFilePattern] { return }
         handle(folderPath, fileURL)
     }
 }
 
-func makeLocalizableString(_ key: String, _ value: String) -> String {
+public func makeLocalizableString(_ key: String, _ value: String) -> String {
     "\"\(key)\" = \"\(value)\";"
 }
 
-func urlEncode(_ string: String) -> String {
+public func urlEncode(_ string: String) -> String {
     var allowedCharacters = CharacterSet.alphanumerics
     allowedCharacters.insert(charactersIn: ".-_")
 
     return string.addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? ""
 }
 
-func makeRelativePath(from projectPath: String, to filePath: String) -> String? {
+public func makeRelativePath(from projectPath: String, to filePath: String) -> String? {
     guard let realProjectPath: String = try? realpath(projectPath) else { return nil }
     return filePath.replace(realProjectPath, "")
 }
 
-func isValidSwiftFileName(_ path: String) -> Bool {
+public func isValidSwiftFileName(_ path: String) -> Bool {
     path[PathWithSwiftExtensionPattern]
 }
 
-func isStringsFileName(_ path: String) -> Bool {
+public func isStringsFileName(_ path: String) -> Bool {
     path[PathWithSwiftExtensionPattern]
 }
 
-func makeClearKeyFrom(path: String) -> String {
+public func makeClearKeyFrom(path: String) -> String {
     var path: String = path
     path.replaceSelf(#"^/"#, "")
     path.replaceSelf(#"/"#, ".")
@@ -138,17 +139,17 @@ func makeClearKeyFrom(path: String) -> String {
     return key
 }
 
-func makeClearKeyFrom(_ projectPath: String, _ filePath: String) -> String? {
+public func makeClearKeyFrom(_ projectPath: String, _ filePath: String) -> String? {
     guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: filePath) else { return nil }
 
     return makeClearKeyFrom(path: relativeFilePath)
 }
 
-func makeNewKey(_ clearKey: String, _ localizedPrefix: String, _ number: Int) -> String {
+public func makeNewKey(_ clearKey: String, _ localizedPrefix: String, _ number: Int) -> String {
     "\(clearKey).\(localizedPrefix)_\(number)"
 }
 
-func getDataFromFileLocalizedString(_ string: String,
+public func getDataFromFileLocalizedString(_ string: String,
                                     _ localizedPrefix: String,
                                     _ methodPrefix: String,
                                     _ handler: (_ clearKey: String, _ number: Int) -> Void
@@ -163,7 +164,7 @@ func getDataFromFileLocalizedString(_ string: String,
     handler(clearKey, number)
 }
 
-func getDataFromAnyLocalizedKey(_ string: String,
+public func getDataFromAnyLocalizedKey(_ string: String,
                                 _ localizedPrefix: String,
                                 _ handler: (_ clearKey: String, _ number: Int) -> Void
 ) {
@@ -176,8 +177,7 @@ func getDataFromAnyLocalizedKey(_ string: String,
     handler(clearKey, number)
 }
 
-
-func cleanFile(path: String) {
+public func cleanFile(path: String) {
     guard let fileURL: URL = URL(string: path) else { return }
     var newText: String = .init()
     var newLineCount: Int = .init()

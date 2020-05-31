@@ -1,6 +1,6 @@
 
-import SwiftRegularExpression
 import ArgumentParser
+import SLLib
 
 struct LocalizableString: ParsableCommand {
 

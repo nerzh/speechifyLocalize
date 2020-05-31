@@ -8,7 +8,7 @@
 import Foundation
 import ArgumentParser
 
-struct Converter: ParsableCommand {
+public struct Converter: ParsableCommand {
 
     @Option(help: "Path to localizations")
     var localizationPath: String
@@ -25,12 +25,14 @@ struct Converter: ParsableCommand {
     @Flag(help: "Converting type")
     var type: ConvertingType
 
-    func run() throws {
+    public init() {}
+
+    public func run() throws {
         try ConverterCore(converter: self).run()
     }
 }
 
-enum ConvertingType: String, CaseIterable {
+public enum ConvertingType: String, CaseIterable {
     case exportCSV
     case importCSV
 }

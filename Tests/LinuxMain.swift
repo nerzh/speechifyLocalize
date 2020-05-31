@@ -3,5 +3,5 @@ import XCTest
 import speechifyLocalizeTests
 
 var tests = [XCTestCaseEntry]()
-tests += speechifyLocalizeTests.allTests()
+tests += sllibPatternsTests.allTests()
 XCTMain(tests)
