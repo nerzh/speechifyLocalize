@@ -132,7 +132,9 @@ struct CSVFile {
 
         while true {
             let matches: [Int: String] = string.regexp(csvElementPattern(separator))
-            if let value = matches[1] {
+            if var value = matches[1] {
+                value.replaceSelf("^\"", "")
+                value.replaceSelf("\"$", "")
                 result.append(value)
                 string.replaceFirstSelf(csvElementPattern(separator), "")
                 continue
