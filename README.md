@@ -15,17 +15,17 @@ swift build -c release
 
 speechifyLocalize -h
 
-#### Parser
+### Parser
 speechifyLocalize parser -h
 
-speechifyLocalize parse --project-path  /path_to_project/with_swift_files
+speechifyLocalize parser --project-path  /path_to_project/with_swift_files
 
-speechifyLocalize parse --localization-path  /path_to_directory_with_name.lproj_folders
+speechifyLocalize parser --localization-path  /path_to_directory_with_name.lproj_folders
 
 example:
 
-speechifyLocalize parse --project-path  /path_to_project/with_swift_files --localization-path /path_to_directory_with_name.lproj_folders 
-#### Converter
+speechifyLocalize parser --project-path  /path_to_project/with_swift_files --localization-path /path_to_directory_with_name.lproj_folders 
+### Converter
 
 speechifyLocalize converter -h
 
@@ -44,7 +44,7 @@ speechifyLocalize converter --localization-path /path_to_directory_with_name.lpr
 speechifyLocalize converter --localization-path /path_to_directory_with_name.lproj_folders --table-file-path /path_to_csv_file_with_name.csv --import-csv
 
 
-#### Validator
+### Validator
 
 speechifyLocalize validator -h
 
