@@ -16,8 +16,8 @@ public struct Converter: ParsableCommand {
     @Option(help: "Path to file")
     var tableFilePath: String
 
-    @Option(default: "String", help: "Prefix of localized strings")
-    var localizedPrefix: String
+//    @Option(default: "String", help: "Prefix of localized strings")
+    var localizedPrefix: String = "String"
 
     @Option(default: ",", help: "Path to localizations")
     var separator: String

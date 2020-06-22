@@ -19,8 +19,8 @@ public struct Parser: ParsableCommand {
     @Option(default: "localize", help: "Prefix for raw strings")
     var stringPrefix: String
 
-    @Option(default: "String", help: "Prefix for localized strings")
-    var localizedPrefix: String
+//    @Option(default: "String", help: "Prefix for localized strings")
+    var localizedPrefix: String = "String"
 
     @Option(default: "localized", help: "Method for localizable strings")
     var methodPrefix: String

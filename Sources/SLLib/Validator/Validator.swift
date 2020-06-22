@@ -16,8 +16,8 @@ public struct Validator: ParsableCommand {
     @Option(help: "Path to localizations")
     var localizationPath: String
 
-    @Option(default: "String", help: "Prefix for localized strings")
-    var localizedPrefix: String
+//    @Option(default: "String", help: "Prefix for localized strings")
+    var localizedPrefix: String = "String"
 
     @Option(default: "localized", help: "Method name for localizable strings")
     var methodPrefix: String
