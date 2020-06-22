@@ -7,8 +7,8 @@ let package = Package(
         .library(name: "SLLib", targets: ["SLLib"])
     ],
     dependencies: [
-        .package(name: "SwiftRegularExpression", url: "https://github.com/nerzh/swift-regular-expression.git", .upToNextMajor(from: "0.2.0")),
-        .package(name: "swift-argument-parser", url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "0.0.5"))
+        .package(name: "SwiftRegularExpression", url: "https://github.com/nerzh/swift-regular-expression.git", .upToNextMajor(from: "0.2.2")),
+        .package(name: "swift-argument-parser", url: "https://github.com/apple/swift-argument-parser", .exact("0.0.5"))
     ],
     targets: [
         .target(
