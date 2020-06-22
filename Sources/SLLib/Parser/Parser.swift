@@ -20,7 +20,7 @@ public struct Parser: ParsableCommand {
     var stringPrefix: String
 
     @Option(default: "String", help: "Prefix for localized strings")
-    var localizedPrefix: String = "String"
+    var localizedPrefix: String
 
     @Option(default: "localized", help: "Method for localizable strings")
     var methodPrefix: String
