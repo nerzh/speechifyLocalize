@@ -174,7 +174,7 @@ struct CSVRow: Sequence {
         get {
             guard let index: Int = columns["\(column)"] else { fatalError("Not found column with name: \(column)") }
             if values.count == index {
-                fatalError("Please check value of column: \(column). Row values: \(values.joined(separator: " <==> "))")
+                fatalError("Please check value of column: \(column).\n\nRow values: \(values.joined(separator: "\n\n"))")
             }
             return values[index]
         }
