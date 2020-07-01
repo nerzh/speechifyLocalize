@@ -173,6 +173,9 @@ struct CSVRow: Sequence {
     subscript(column: String) -> String {
         get {
             guard let index: Int = columns["\(column)"] else { fatalError("Not found column with name: \(column)") }
+            if values.count == index {
+                fatalError("Please check value of column: \(column). Row values: \(values.joined(separator: " <==> "))")
+            }
             return values[index]
         }
         set {
