@@ -191,7 +191,10 @@ struct CSVRow: Sequence {
     }
 
     func toString(with separator: String) -> String {
-        values.map { "\"\($0)\"" }.joined(separator: separator)
+        values.map { value in
+            let escapedValue: String = value.replace(#"\""#, "\"\"")
+            "\"\(escapedValue)\""
+        }.joined(separator: separator)
     }
 
     func makeIterator() -> Array<String>.Iterator {
