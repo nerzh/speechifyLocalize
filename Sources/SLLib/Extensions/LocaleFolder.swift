@@ -226,7 +226,7 @@ struct TextLine: Equatable {
     var type: TextLineType = .text
 
     init(number: Int, clearKey: String, localizedPrefix: String, value: String, type: TextLineType = .localizedString) {
-        self.value = value.clean()
+        self.value = value
         self.number = number
         self.clearKey = clearKey
         self.localizedPrefix = localizedPrefix
