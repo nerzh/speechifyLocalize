@@ -124,8 +124,8 @@ public func isValidSwiftFileName(_ path: String) -> Bool {
     path[PathWithSwiftExtensionPattern]
 }
 
-public func isStringsFileName(_ path: String) -> Bool {
-    path[PathWithSwiftExtensionPattern]
+public func isValidStringsFileName(_ path: String) -> Bool {
+    path[StringFilePattern]
 }
 
 public func makeClearKeyFrom(path: String) -> String {

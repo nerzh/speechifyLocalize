@@ -42,9 +42,11 @@ extension ValidatorCore {
         deleteLocalizationStrings(from: localizationPath, with: unusedKeys, localizedPrefix: localizedPrefix)
     }
 
+    /// Get current keys from Localization Path
     private func getCurrentKeys(from path: String, localizedPrefix: String) -> Set<String> {
         var result: Set<String> = .init()
         findStringsFiles(form: path) { (folderPath, fileURL) in
+            if !isValidStringsFileName(fileURL.path) { return }
             readFile(fileURL) { (line) in
                 getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
                     result.insert(makeNewKey(clearKey, localizedPrefix, number))
@@ -55,10 +57,12 @@ extension ValidatorCore {
         return result
     }
 
+    /// Compare current localization keys with keys inside swift files and get array of unused keys
     private func getUnusedKeys(from path: String, with: [String], localizedPrefix: String) -> [String] {
         var keysIndex: [String: Int] = .init()
         with.forEach { keysIndex[$0] = 0 }
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
+            if !isValidSwiftFileName(fileURL.path) { return }
             readFile(fileURL) { (line) in
                 getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
                     let key: String = makeNewKey(clearKey, localizedPrefix, number)
@@ -72,9 +76,11 @@ extension ValidatorCore {
         return Array(keysIndex.filter { $1 == 0 }.keys)
     }
 
+    /// Find unused keys inside .strings files and delete them
     private func deleteLocalizationStrings(from path: String, with: [String], localizedPrefix: String) {
         let unusedKeysSet: Set<String> = .init(with)
         findStringsFiles(form: path) { (folderPath, fileURL) in
+            if !isValidStringsFileName(fileURL.path) { return }
             var newText: String = .init()
             readFile(fileURL) { (line) in
                 var line: String = line
@@ -130,6 +136,7 @@ extension ValidatorCore {
         var tempIndex: [String: (from: String, to: String)] = .init()
         diff.forEach { tempIndex[$0.from] = $0 }
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
+            if !(isValidStringsFileName(fileURL.path) || isValidSwiftFileName(fileURL.path)) { return }
             var newText: String = .init()
             readFile(fileURL) { (line) in
                 var line: String = line
