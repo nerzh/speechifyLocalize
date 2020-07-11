@@ -193,3 +193,33 @@ public func cleanFile(path: String) {
 
     writeFile(to: path, newText)
 }
+
+public func checkLocalizationKeysDiff(_ localizationPath: String) {
+    var lastSet: Set<String> = .init()
+    var currentSet: Set<String> = .init()
+    recursiveReadDirectory(path: localizationPath) { (folderPath, fileURL) in
+        if !isValidStringsFileName(fileURL.path) { return }
+        readFile(fileURL) { (line) in
+            let matches: [Int: String] = line.regexp(LocalizableStringPattern)
+            if let key: String = matches[1] {
+                currentSet.insert(key)
+            }
+        }
+        if lastSet.count != 0 {
+            var diff: Set<String> = .init()
+            if currentSet.count > lastSet.count {
+                diff = currentSet.subtracting(lastSet)
+            } else {
+                diff = lastSet.subtracting(currentSet)
+            }
+            if diff.count > 0 {
+                fatalError("ERROR: localization files are difference: \(diff)")
+            }
+        }
+        lastSet = currentSet
+    }
+}
+
+
+
+

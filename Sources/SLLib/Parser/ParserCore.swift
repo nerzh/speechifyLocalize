@@ -20,6 +20,9 @@ final class ParserCore {
     }
 
     func run() throws {
+        /// the strings files keys comparison
+        checkLocalizationKeysDiff(parser.localizationPath)
+
         let currentStrings: [LocaleFolder] = getCurrentLocalizations(path: parser.localizationPath,
                                                                      localizedPrefix: parser.localizedPrefix)
         

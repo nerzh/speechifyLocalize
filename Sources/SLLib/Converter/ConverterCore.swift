@@ -16,6 +16,9 @@ final class ConverterCore {
     }
 
     func run() throws {
+        /// the strings files keys comparison
+        checkLocalizationKeysDiff(converter.localizationPath)
+
         switch converter.type {
         case .exportCSV:
             try CSVExporter(converter.localizationPath,

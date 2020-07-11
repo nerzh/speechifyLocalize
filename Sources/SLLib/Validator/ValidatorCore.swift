@@ -16,6 +16,9 @@ final class ValidatorCore {
     }
 
     func run() throws {
+        /// the strings files keys comparison
+        checkLocalizationKeysDiff(validator.localizationPath)
+        
         replaceKeysOfChangedFiles(validator.projectPath,
                                   validator.localizationPath,
                                   validator.localizedPrefix,
