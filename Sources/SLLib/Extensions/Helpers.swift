@@ -150,9 +150,9 @@ public func makeNewKey(_ clearKey: String, _ localizedPrefix: String, _ number: 
 }
 
 public func getDataFromFileLocalizedString(_ string: String,
-                                    _ localizedPrefix: String,
-                                    _ methodPrefix: String,
-                                    _ handler: (_ clearKey: String, _ number: Int) -> Void
+                                           _ localizedPrefix: String,
+                                           _ methodPrefix: String,
+                                           _ handler: (_ clearKey: String, _ number: Int) -> Void
 ) {
     
     let matches: [Int: String] = string.regexp(fileLocalizedStringPattern(localizedPrefix, methodPrefix))
@@ -165,16 +165,24 @@ public func getDataFromFileLocalizedString(_ string: String,
 }
 
 public func getDataFromAnyLocalizedKey(_ string: String,
-                                _ localizedPrefix: String,
-                                _ handler: (_ clearKey: String, _ number: Int) -> Void
+                                       _ localizedPrefix: String,
+                                       _ handler: (_ clearKeys: [(clearKey: String, number: Int)]) -> Void
 ) {
-    let matches: [Int: String] = string.regexp(localizedKeyItemsPattern(localizedPrefix))
-    guard
-        let clearKey: String = matches[1],
-        let strNumber: String = matches[2],
-        let number: Int = Int(strNumber)
-        else { return }
-    handler(clearKey, number)
+    var clearKeys: [(clearKey: String, number: Int)] = .init()
+    var string: String = string
+    while true {
+        let matches: [Int: String] = string.regexp(localizedKeyItemsPattern(localizedPrefix))
+        guard
+            let clearKey: String = matches[1],
+            let strNumber: String = matches[2],
+            let number: Int = Int(strNumber)
+            else { break }
+
+        clearKeys.append((clearKey: clearKey, number: number))
+        string.replaceFirstSelf(localizedKeyItemsPattern(localizedPrefix), "")
+    }
+
+    handler(clearKeys)
 }
 
 public func cleanFile(path: String) {

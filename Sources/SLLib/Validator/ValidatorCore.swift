@@ -51,8 +51,10 @@ extension ValidatorCore {
         findStringsFiles(form: path) { (folderPath, fileURL) in
             if !isValidStringsFileName(fileURL.path) { return }
             readFile(fileURL) { (line) in
-                getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
-                    result.insert(makeNewKey(clearKey, localizedPrefix, number))
+                getDataFromAnyLocalizedKey(line, localizedPrefix) { clearKeys in
+                    clearKeys.forEach { key in
+                        result.insert(makeNewKey(key.clearKey, localizedPrefix, key.number))
+                    }
                 }
             }
         }
@@ -67,10 +69,12 @@ extension ValidatorCore {
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
             if !isValidSwiftFileName(fileURL.path) { return }
             readFile(fileURL) { (line) in
-                getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
-                    let key: String = makeNewKey(clearKey, localizedPrefix, number)
-                    if keysIndex[key] != nil {
-                        keysIndex[key]! += 1
+                getDataFromAnyLocalizedKey(line, localizedPrefix) { clearKeys in
+                    clearKeys.forEach { clearKey in
+                        let key: String = makeNewKey(clearKey.clearKey, localizedPrefix, clearKey.number)
+                        if keysIndex[key] != nil {
+                            keysIndex[key]! += 1
+                        }
                     }
                 }
             }
@@ -87,9 +91,11 @@ extension ValidatorCore {
             var newText: String = .init()
             readFile(fileURL) { (line) in
                 var line: String = line
-                getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
-                    let key: String = makeNewKey(clearKey, localizedPrefix, number)
-                    if unusedKeysSet.contains(key) { line = "" }
+                getDataFromAnyLocalizedKey(line, localizedPrefix) { clearKeys in
+                    clearKeys.forEach { clearKey in
+                        let key: String = makeNewKey(clearKey.clearKey, localizedPrefix, clearKey.number)
+                        if unusedKeysSet.contains(key) { line = "" }
+                    }
                 }
                 if line.count != 0 { newText.append(line) }
             }
@@ -143,11 +149,13 @@ extension ValidatorCore {
             var newText: String = .init()
             readFile(fileURL) { (line) in
                 var line: String = line
-                getDataFromAnyLocalizedKey(line, localizedPrefix) { (clearKey, number) in
-                    if tempIndex[clearKey] != nil {
-                        let from: String = makeNewKey(clearKey, localizedPrefix, number)
-                        let to: String = makeNewKey(tempIndex[clearKey]!.to, localizedPrefix, number)
-                        line.replaceSelf(from, to)
+                getDataFromAnyLocalizedKey(line, localizedPrefix) { clearKeys in
+                    clearKeys.forEach { clearKey in
+                        if tempIndex[clearKey.clearKey] != nil {
+                            let from: String = makeNewKey(clearKey.clearKey, localizedPrefix, clearKey.number)
+                            let to: String = makeNewKey(tempIndex[clearKey.clearKey]!.to, localizedPrefix, clearKey.number)
+                            line.replaceSelf(from, to)
+                        }
                     }
                 }
                 newText.append(line)
