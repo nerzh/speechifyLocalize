@@ -6,3 +6,4 @@ xcuserdata/
 .swiftpm
 Test
 Loc
+/Tests/speechifyLocalizeTests/Fixtures/GoogleKey.txt

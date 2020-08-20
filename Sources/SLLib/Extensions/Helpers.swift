@@ -8,7 +8,6 @@
 import Foundation
 import SwiftRegularExpression
 
-
 public func realpath(_ path: String) throws -> String {
     let pointer: UnsafeMutablePointer<Int8>? = realpath(path, nil)
     guard
@@ -228,6 +227,8 @@ public func checkLocalizationKeysDiff(_ localizationPath: String) {
     }
 }
 
+func translate(_ text: String, from: String = "en", to: String, api: String, key: String) throws -> String {
+    let googleTranslate: GoogleTranslate = .init(api: api, key: key)
 
-
-
+    return try googleTranslate.translate(text, from: from, to: to)
+}

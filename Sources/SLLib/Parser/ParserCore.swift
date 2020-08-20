@@ -129,10 +129,10 @@ extension ParserCore {
 
     private func mergeLocalizedStrings(_ current: [LocaleFolder], _ new: [LineGroup]) -> [LocaleFolder] {
         var result: [LocaleFolder] = .init()
-
         for var localeFolder in current {
             for var localeFile in localeFolder.files {
-                for newLineGroup in new {
+                for var newLineGroup in new {
+                    translateValue(folder: localeFolder, group: &newLineGroup)
                     if var currentLineGroup = localeFile.getGroup(by: newLineGroup.id) {
                         currentLineGroup.merge(newLineGroup)
                         localeFile.overrideGroup(currentLineGroup)
@@ -146,6 +146,29 @@ extension ParserCore {
         }
 
         return result
+    }
+
+    private func translateValue(folder: LocaleFolder, group: inout LineGroup) {
+        guard
+            let folderLang: String = folder.path.regexp(LprojNamePattern)[1]
+            else { fatalError("Translate: can not parse lang name") }
+        if folderLang == parser.lang { return }
+        group.lines = group.lines.map { (line) -> TextLine in
+            let newValue: String = (try? translate(line.getValue(),
+                                                   from: parser.lang,
+                                                   to: folderLang,
+                                                   api: parser.googleApi,
+                                                   key: parser.googlekey)) ?? ""
+            if newValue.isEmpty {
+                return line
+            } else {
+                return TextLine(number: line.number,
+                                clearKey: line.getClearKey(),
+                                localizedPrefix: parser.localizedPrefix,
+                                value: newValue,
+                                type: line.type)
+            }
+        }
     }
 
     private func findNewLocalizeStrings(_ path: String,
