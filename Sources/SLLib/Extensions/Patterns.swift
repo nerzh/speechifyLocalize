@@ -7,7 +7,7 @@
 
 import Foundation
 
-public let LocalizableStringPattern: String = #".*\"([\s\S]+)\"\s+=\s+\"([\s\S]+)\".*;.*$"#
+public let LocalizableStringPattern: String = #".*\"([\s\S]+)\"\s+=\s+\"([\s\S]*)\".*;.*$"#
 
 public let PathWithSwiftExtensionPattern: String = #"^([\s\S]+)\.swift$"#
 
@@ -33,8 +33,16 @@ public func stringForLocalizePattern(_ stringPrefix: String) -> String {
     "^([\\s\\S]*)\"\\s*\(stringPrefix)\\.([\\s\\S]+)\\S*?\"([\\s\\S]*)$"
 }
 
+public func replaceStringLocalizePattern(_ stringPrefix: String) -> String {
+    "\"\\s*\(stringPrefix)\\.[\\s\\S]+?\""
+}
+
+public func replaceStringLocalizePattern(_ stringPrefix: String, _ value: String) -> String {
+    "\"\\s*\(stringPrefix)\\.\(value)\\s*?\""
+}
+
 public func localizedStringItemsPattern(_ localizedPrefix: String) -> String {
-    "^.*\"([\\s\\S]+)(\\.\(localizedPrefix)_\\d+.*?)\"\\s+=\\s+\"([\\s\\S]+)\".*;.*$"
+    "^.*\"([\\s\\S]+)(\\.\(localizedPrefix)_\\d+.*?)\"\\s+=\\s+\"([\\s\\S]*)\".*;.*$"
 }
 
 public func fileNameFromLocalizedKeyPattern(_ localizedPrefix: String) -> String {
@@ -49,6 +57,14 @@ public func numberLocalizedStringPattern(_ localizedPrefix: String) -> String {
     "\(localizedPrefix)_(\\d+)"
 }
 
+public func localizedStringAllItemsPattern(_ localizedPrefix: String) -> String {
+    "^.*\"([\\s\\S]+)\\.(\(localizedPrefix)_(\\d+).*?)\"\\s+=\\s+\"([\\s\\S]*)\".*;.*$"
+}
+
 public func fileLocalizedStringPattern(_ localizedPrefix: String, _ methodName: String) -> String {
     "\"([^\"]+)\\.\(localizedPrefix)_(\\d+)\"\\.\(methodName)"
+}
+
+public func swiftFilelocalizedKeyPattern(_ localizedPrefix: String, _ methodName: String) -> String {
+    "\"(([^\"]+)\\.\(localizedPrefix)_(\\d+))\"\\.\(methodName)"
 }

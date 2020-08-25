@@ -17,16 +17,26 @@ final class ValidatorCore {
 
     func run() throws {
         /// the strings files keys comparison
-        checkLocalizationKeysDiff(validator.localizationPath)
-        
-        replaceKeysOfChangedFiles(validator.projectPath,
-                                  validator.localizationPath,
-                                  validator.localizedPrefix,
-                                  validator.methodPrefix)
-
-        deleteUnusedLocalizationStrings(validator.projectPath,
-                                        validator.localizationPath,
-                                        validator.localizedPrefix)
+//        checkLocalizationKeysDiff(validator.localizationPath)
+        checkLocalizationKeysDiff(validator.localizationPath, validator.localizedPrefix)
+        return
+        switch validator.type {
+        case .deleteUnusedKeys:
+            deleteUnusedLocalizationStrings(validator.projectPath,
+                                            validator.localizationPath,
+                                            validator.localizedPrefix)
+        case .fileName:
+            replaceKeysOfChangedFiles(validator.projectPath,
+                                      validator.localizationPath,
+                                      validator.localizedPrefix,
+                                      validator.methodPrefix)
+        case .sync:
+            localizationFilesSynchronizer(validator.projectPath,
+                                          validator.localizationPath,
+                                          validator.localizedPrefix,
+                                          validator.stringPrefix,
+                                          validator.methodPrefix)
+        }
     }
 }
 
@@ -163,5 +173,65 @@ extension ValidatorCore {
 
             writeFile(to: fileURL.path, newText)
         }
+    }
+}
+
+
+
+// MARK: SYNCHRONIZATION STRINGS FILES
+extension ValidatorCore {
+
+    private func localizationFilesSynchronizer(_ projectPath: String,
+                                               _ localizationPath: String,
+                                               _ localizedPrefix: String,
+                                               _ stringPrefix: String,
+                                               _ methodPrefix: String
+    ) {
+        return
+        var existingKeys: [String: Set<String>] = .init()
+        var localizedKeys: Set<String> = .init()
+        var notExistingKeys: [String: [String]] = .init()
+
+//        iterateLocalizationFiles(localizationPath: localizationPath,
+//                                 localizedPrefix: localizedPrefix
+//        ) { (path, textLine) in
+//            if existingKeys[path] == nil { existingKeys[path] = .init() }
+//            existingKeys[path]!.insert(textLine.getKey())
+//        }
+
+        iterateFileStringsLines(localizationPath: localizationPath) { (folderPath, filePath, localizedString, other) in
+            if let items = getAllLocalizeStringItems(localizedString, localizedPrefix) {
+                if existingKeys[folderPath] == nil { existingKeys[folderPath] = .init() }
+                existingKeys[folderPath]!.insert(items.key)
+            }
+        }
+
+        iterateSwiftFilesKeys(projectPath: projectPath,
+                              localizedPrefix: localizedPrefix,
+                              stringPrefix: stringPrefix,
+                              methodPrefix: methodPrefix
+        ) { (filePath, clearKey, translated, target, raw) in
+            if  let translated = translated
+            {
+                var tmpline: String = translated
+                while tmpline[fileLocalizedStringPattern(localizedPrefix, methodPrefix)] {
+                    if let key: String = tmpline.regexp(swiftFilelocalizedKeyPattern(localizedPrefix, methodPrefix))[1] {
+                        localizedKeys.insert(key)
+                    }
+                    tmpline.replaceFirstSelf(fileLocalizedStringPattern(localizedPrefix, methodPrefix), "")
+                }
+            }
+        }
+
+        localizedKeys.forEach { (swiftFileLocalizedKey) in
+            existingKeys.forEach { (path, localizedKeys) in
+                if !localizedKeys.contains(swiftFileLocalizedKey) {
+                    if notExistingKeys[path] == nil { notExistingKeys[path] = .init() }
+                    notExistingKeys[path]!.append(swiftFileLocalizedKey)
+                }
+            }
+        }
+
+        print(notExistingKeys)
     }
 }

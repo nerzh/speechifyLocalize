@@ -22,9 +22,23 @@ public struct Validator: ParsableCommand {
     @Option(default: "localized", help: "Method name for localizable strings")
     var methodPrefix: String
 
+    @Option(default: "localize", help: "Prefix for raw strings")
+    var stringPrefix: String
+
+    @Flag(help: "Validation type")
+    var type: ValidationType
+
     public init() {}
 
     public func run() throws {
         try ValidatorCore(validator: self).run()
     }
 }
+
+public enum ValidationType: String, CaseIterable {
+    case sync
+    case deleteUnusedKeys
+    case fileName
+}
+
+

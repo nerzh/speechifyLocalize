@@ -1,11 +1,147 @@
 //
 //  LocaleFolder.swift
-//  
 //
 //  Created by Oleh Hudeichuk on 21.05.2020.
 //
 
 import Foundation
+
+public typealias FilePath = String
+
+public class LocaleStore {
+    var langs: [LangFolder] = .init()
+
+    func addNewString(clearKey: String, target: String, stringPrefix: String) {
+        let matches: [Int: String] = target.regexp(stringForLocalizePattern(stringPrefix))
+        if let value: String = matches[2] {
+            langs.forEach { (lang) in
+                lang.addNewString(clearKey: clearKey, value: value)
+            }
+        }
+    }
+}
+
+public class LangFolder {
+
+    var path: String
+    var files: [FilePath: StringsFile] = .init()
+
+    init(path: String) {
+        self.path = path
+    }
+
+    func addNewString(clearKey: String, value: String) {
+        files.forEach { (filePath, stringFile) in
+            files[filePath]?.addNewString(clearKey: clearKey, value: value)
+        }
+    }
+}
+
+public struct StringsFile {
+
+    typealias ClearKey = String
+    var path: String
+    var keyPrefix: String
+    var groups: [ClearKey: SwiftFileGroup] = .init()
+
+    init(path: String, keyPrefix: String) {
+        self.path = path
+        self.keyPrefix = keyPrefix
+    }
+
+    mutating func parseLocalizedString(localizedString: String) {
+        if let items = getAllLocalizeStringItems(localizedString, keyPrefix) {
+            if groups[items.clearKey] == nil {
+                groups[items.clearKey] = SwiftFileGroup(clearKey: items.clearKey, keyPrefix: keyPrefix)
+            }
+            let line: StringsLine = .init(keyPrefix: keyPrefix,
+                                          clearKey: items.clearKey,
+                                          fullKey: items.key,
+                                          number: items.number,
+                                          value: items.value)
+            groups[items.clearKey]!.addLine(line)
+        }
+    }
+
+    mutating func addNewString(clearKey: String, value: String) {
+        groups[clearKey]?.addNewString(clearKey: clearKey, value: value)
+    }
+}
+
+public struct SwiftFileGroup {
+
+    var clearKey: String
+    var keyPrefix: String
+    var count: Int {
+        get { _count }
+        set { if _count < newValue { _count = newValue } }
+    }
+    var lines: [StringsLine] { _lines }
+
+    private var _lines: [StringsLine]
+    private var valuesKeys: [String: StringsLine]
+    private var _count: Int
+
+    init(clearKey: String, keyPrefix: String) {
+        self.clearKey = clearKey
+        self.keyPrefix = keyPrefix
+        self._count = .init()
+        self._lines = .init()
+        self.valuesKeys = .init()
+    }
+
+    mutating func addNewString(clearKey: String, value: String) {
+        if isExistValue(value) { return }
+        _count += 1
+        let newLine: StringsLine = .init(keyPrefix: keyPrefix,
+                                         clearKey: clearKey,
+                                         fullKey: makeNewKey(clearKey, keyPrefix, count),
+                                         number: count,
+                                         value: value)
+        _lines.append(newLine)
+        valuesKeys[newLine.value] = newLine
+    }
+
+    public func getLine(_ value: String) -> StringsLine? {
+        valuesKeys[value]
+    }
+
+    mutating public func addLine(_ line: StringsLine) {
+        self.count = line.number
+        _lines.append(line)
+        valuesKeys[line.value] = line
+    }
+
+    private func isExistValue(_ value: String) -> Bool {
+        valuesKeys[value] != nil
+    }
+}
+
+public struct StringsLine {
+    var keyPrefix: String
+    var clearKey: String
+    var fullKey: String
+    var number: Int
+    var value: String
+
+    public func makeLocalizable() -> String {
+        makeLocalizableString(fullKey, value)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 public struct LocaleFolder {
     var path: String

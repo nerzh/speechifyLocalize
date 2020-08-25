@@ -96,6 +96,34 @@ public func getCurrentLocalizations(path: String, localizedPrefix: String) -> [L
     return result
 }
 
+public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleStore {
+    let localeStore: LocaleStore = .init()
+    var tmpLangFolder: LangFolder = .init(path: "")
+
+    iterateFileStringsLines(localizationPath: path) { (folderPath, filePath, localizedString, other) in
+        guard let localizedString = localizedString else { return }
+        if tmpLangFolder.path != folderPath {
+            if tmpLangFolder.files.count > 0 {
+                localeStore.langs.append(tmpLangFolder)
+            }
+            tmpLangFolder = LangFolder(path: folderPath)
+        }
+
+        if tmpLangFolder.files[filePath] == nil {
+            tmpLangFolder.files[filePath] = StringsFile(path: filePath, keyPrefix: localizedPrefix)
+        }
+        tmpLangFolder.files[filePath]?.parseLocalizedString(localizedString: localizedString)
+    }
+    if tmpLangFolder.files.count > 0 {
+        localeStore.langs.append(tmpLangFolder)
+    }
+
+    return localeStore
+}
+
+
+
+
 public func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
     recursiveReadDirectory(path: directory) { (folderPath, fileURL) in
         if !fileURL.path[StringFilePattern] { return }
@@ -227,8 +255,145 @@ public func checkLocalizationKeysDiff(_ localizationPath: String) {
     }
 }
 
+
+public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPrefix: String) {
+
+    var allKeys: Set<String> = .init()
+    var eachLangKeys: [String: Set<String>] = .init()
+    var diffLangKeys: [String: Set<String>] = .init()
+
+//    iterateLocalizationFiles(localizationPath: localizationPath,
+//                             localizedPrefix: localizedPrefix
+//    ) { (path, textLine) in
+//        if eachLangKeys[path] == nil { eachLangKeys[path] = .init() }
+//        let k = textLine.getKey()
+//        allKeys.insert(k)
+//        eachLangKeys[path]!.insert(k)
+//
+//        if path == "/Users/nerzh/Downloads/Test/PROJECT/Resources/ru.lproj" {
+//            print(k)
+//            let g = "SpeechifyCommon.Sources.Helpers.Errors.SpeechifyErrorDetails.String_63"
+//            if k == g {
+//
+//
+//
+//            }
+//        }
+//
+//    }
+//
+//    eachLangKeys.forEach { (langPath, langKeys) in
+//
+////        diffLangKeys[langPath] = allKeys.subtracting(langKeys)
+////        diffLangKeys[langPath] = langKeys.subtracting(allKeys)
+//
+//        if allKeys.count > langKeys.count {
+//            if diffLangKeys[langPath] == nil { diffLangKeys[langPath] = .init() }
+////            print(langPath)
+////            print(allKeys.count)
+////            print(langKeys.count)
+//            if langPath == "/Users/nerzh/Downloads/Test/PROJECT/Resources/ru.lproj" {
+////                print(allKeys.subtracting(langKeys))
+//
+//                allKeys.forEach { (line) in
+////                    if !langKeys.contains(line) {
+////                        print(line)
+////                    }
+//
+////                    langKeys.forEach { (lang_line) in
+////                        if lang_line == "SpeechifyCommon.Sources.Helpers.Errors.SpeechifyErrorDetails.String_63" {
+////
+////                        }
+////                    }
+//
+//                }
+//            }
+//
+//
+////            diff = allKeys.subtracting(langKeys)
+////            diffLangKeys[langPath] = allKeys.subtracting(langKeys)
+//        } else {
+////            diff = langKeys.subtracting(allKeys)
+////            diffLangKeys[langPath] = langKeys.subtracting(allKeys)
+//        }
+////        if diff.count > 0 {
+////            fatalError("ERROR: localization files are difference: \(diff)")
+////        }
+//    }
+//
+//    print(diffLangKeys)
+}
+
+
 func translate(_ text: String, from: String = "en", to: String, api: String, key: String) throws -> String {
     let googleTranslate: GoogleTranslate = .init(api: api, key: key)
 
     return try googleTranslate.translate(text, from: from, to: to)
+}
+
+public func getLocaleName(_ path: String) -> String? {
+    path.regexp(LprojNamePattern)[1]
+}
+
+public func getFolderLang(_ folderPath: String) -> String {
+    guard let folderLang: String = folderPath.regexp(LprojNamePattern)[1] else {
+        fatalError("Can not parse lang name")
+    }
+    return folderLang
+}
+
+func getAllLocalizeStringItems(_ localizedString: String?,
+                               _ keyPrefix: String
+) -> (key: String, clearKey: String, prefix: String, number: Int, value: String)? {
+    guard let localizedString = localizedString else { return nil }
+    let matches: [Int: String] = localizedString.regexp(localizedStringAllItemsPattern(keyPrefix))
+    if  let clearKey: String = matches[1],
+        let prefix: String = matches[2],
+        let stringNumber: String = matches[3],
+        let number: Int = Int(stringNumber),
+        let value: String = matches[4]
+    {
+        let key: String = "\(clearKey).\(prefix)"
+        return (key: key, clearKey: clearKey, prefix: prefix, number: number, value: value)
+    } else {
+        return nil
+    }
+}
+
+func iterateFileStringsLines(localizationPath: String,
+                             _ handler: (_ folderPath: String, _ filePath: String, _ localizedString: String?, _ other: String?) -> Void
+) {
+    recursiveReadDirectory(path: localizationPath) { (folderPath, fileURL) in
+        if !isValidStringsFileName(fileURL.path) { return }
+        readFile(fileURL) { (line) in
+            if line[LocalizableStringPattern] {
+                handler(folderPath, fileURL.path, line, nil)
+            } else {
+                handler(folderPath, fileURL.path, nil, line)
+            }
+        }
+    }
+}
+
+func iterateSwiftFilesKeys(projectPath: String,
+                           localizedPrefix: String,
+                           stringPrefix: String,
+                           methodPrefix: String,
+                           _ handler: (_ filePath: String, _ clearKey: String, _ translated: String?, _ target: String?, _ raw: String?) -> Void
+) {
+    recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
+        if !isValidSwiftFileName(fileURL.path) { return }
+        guard let clearKey: String = makeClearKeyFrom(projectPath, fileURL.path) else {
+            fatalError("ERROR: make ClearKey for \(fileURL.path)")
+        }
+        readFile(fileURL) { (line) in
+            if line[stringForLocalizePattern(stringPrefix)] {
+                handler(fileURL.path, clearKey, nil, line, line)
+            } else if line[fileLocalizedStringPattern(localizedPrefix, methodPrefix)] {
+                handler(fileURL.path, clearKey, line, nil, line)
+            } else {
+                handler(fileURL.path, clearKey, nil, nil, line)
+            }
+        }
+    }
 }

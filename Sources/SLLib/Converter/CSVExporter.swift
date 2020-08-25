@@ -57,8 +57,4 @@ extension CSVExporter {
 
         csvFile.write(to: tableFilePath)
     }
-
-    private func getLocaleName(_ path: String) -> String? {
-        path.regexp(LprojNamePattern)[1]
-    }
 }
