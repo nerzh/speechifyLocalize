@@ -83,27 +83,6 @@ public func writeFile(to: String, _ text: String) {
     }
 }
 
-//public func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
-//    var tempStore: [String: LocaleFolder] = .init()
-//
-//    findStringsFiles(form: path) { (folderPath, fileURL) in
-//        var localeFolder: LocaleFolder = .init(path: folderPath)
-//        if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
-//        var localeFile: LocaleFile = .init(path: fileURL.path, localizedPrefix: localizedPrefix)
-//        readFile(fileURL) { (str) in
-//            localeFile.parseLocalizableString(str)
-//        }
-//        localeFolder.addLocaleFile(localeFile)
-//        tempStore[localeFolder.path] = localeFolder
-//    }
-//
-//    let result: [LocaleFolder] = tempStore.values.map { (localeFolder) -> LocaleFolder in
-//        localeFolder
-//    }
-//
-//    return result
-//}
-
 public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleStore {
     let localeStore: LocaleStore = .init()
     var tmpLangFolder: LangFolder = .init(path: "")
@@ -127,9 +106,6 @@ public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleSt
 
     return localeStore
 }
-
-
-
 
 public func findStringsFiles(form directory: String, _ handle: (String, URL) -> Void) {
     recursiveReadDirectory(path: directory) { (folderPath, fileURL) in
@@ -188,7 +164,7 @@ public func getDataFromFileLocalizedString(_ string: String,
                                            _ methodPrefix: String,
                                            _ handler: (_ clearKey: String, _ number: Int) -> Void
 ) {
-    
+
     let matches: [Int: String] = string.regexp(fileLocalizedStringPattern(localizedPrefix, methodPrefix))
     guard
         let clearKey: String = matches[1],
@@ -236,31 +212,31 @@ public func cleanFile(path: String) {
     writeFile(to: path, newText)
 }
 
-public func checkLocalizationKeysDiff(_ localizationPath: String) {
-    var lastSet: Set<String> = .init()
-    var currentSet: Set<String> = .init()
-    recursiveReadDirectory(path: localizationPath) { (folderPath, fileURL) in
-        if !isValidStringsFileName(fileURL.path) { return }
-        readFile(fileURL) { (line) in
-            let matches: [Int: String] = line.regexp(LocalizableStringPattern)
-            if let key: String = matches[1] {
-                currentSet.insert(key)
-            }
-        }
-        if lastSet.count != 0 {
-            var diff: Set<String> = .init()
-            if currentSet.count > lastSet.count {
-                diff = currentSet.subtracting(lastSet)
-            } else {
-                diff = lastSet.subtracting(currentSet)
-            }
-            if diff.count > 0 {
-                fatalError("ERROR: localization files are difference: \(diff)")
-            }
-        }
-        lastSet = currentSet
-    }
-}
+//public func checkLocalizationKeysDiff(_ localizationPath: String) {
+//    var lastSet: Set<String> = .init()
+//    var currentSet: Set<String> = .init()
+//    recursiveReadDirectory(path: localizationPath) { (folderPath, fileURL) in
+//        if !isValidStringsFileName(fileURL.path) { return }
+//        readFile(fileURL) { (line) in
+//            let matches: [Int: String] = line.regexp(LocalizableStringPattern)
+//            if let key: String = matches[1] {
+//                currentSet.insert(key)
+//            }
+//        }
+//        if lastSet.count != 0 {
+//            var diff: Set<String> = .init()
+//            if currentSet.count > lastSet.count {
+//                diff = currentSet.subtracting(lastSet)
+//            } else {
+//                diff = lastSet.subtracting(currentSet)
+//            }
+//            if diff.count > 0 {
+//                fatalError("ERROR: localization files are difference: \(diff)")
+//            }
+//        }
+//        lastSet = currentSet
+//    }
+//}
 
 
 public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPrefix: String) {
@@ -269,66 +245,26 @@ public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPre
     var eachLangKeys: [String: Set<String>] = .init()
     var diffLangKeys: [String: Set<String>] = .init()
 
-//    iterateLocalizationFiles(localizationPath: localizationPath,
-//                             localizedPrefix: localizedPrefix
-//    ) { (path, textLine) in
-//        if eachLangKeys[path] == nil { eachLangKeys[path] = .init() }
-//        let k = textLine.getKey()
-//        allKeys.insert(k)
-//        eachLangKeys[path]!.insert(k)
-//
-//        if path == "/Users/nerzh/Downloads/Test/PROJECT/Resources/ru.lproj" {
-//            print(k)
-//            let g = "SpeechifyCommon.Sources.Helpers.Errors.SpeechifyErrorDetails.String_63"
-//            if k == g {
-//
-//
-//
-//            }
-//        }
-//
-//    }
-//
-//    eachLangKeys.forEach { (langPath, langKeys) in
-//
-////        diffLangKeys[langPath] = allKeys.subtracting(langKeys)
-////        diffLangKeys[langPath] = langKeys.subtracting(allKeys)
-//
-//        if allKeys.count > langKeys.count {
-//            if diffLangKeys[langPath] == nil { diffLangKeys[langPath] = .init() }
-////            print(langPath)
-////            print(allKeys.count)
-////            print(langKeys.count)
-//            if langPath == "/Users/nerzh/Downloads/Test/PROJECT/Resources/ru.lproj" {
-////                print(allKeys.subtracting(langKeys))
-//
-//                allKeys.forEach { (line) in
-////                    if !langKeys.contains(line) {
-////                        print(line)
-////                    }
-//
-////                    langKeys.forEach { (lang_line) in
-////                        if lang_line == "SpeechifyCommon.Sources.Helpers.Errors.SpeechifyErrorDetails.String_63" {
-////
-////                        }
-////                    }
-//
-//                }
-//            }
-//
-//
-////            diff = allKeys.subtracting(langKeys)
-////            diffLangKeys[langPath] = allKeys.subtracting(langKeys)
-//        } else {
-////            diff = langKeys.subtracting(allKeys)
-////            diffLangKeys[langPath] = langKeys.subtracting(allKeys)
-//        }
-////        if diff.count > 0 {
-////            fatalError("ERROR: localization files are difference: \(diff)")
-////        }
-//    }
-//
-//    print(diffLangKeys)
+    let localeStore: LocaleStore = getCurrentStrings(path: localizationPath, localizedPrefix: localizedPrefix)
+
+    localeStore.langs.forEach { (langFolder) in
+        langFolder.files.values.forEach { (stringsFile) in
+            stringsFile.groups.forEach { (clearKey, swiftFileGroup) in
+                swiftFileGroup.lines.forEach { (stringsLine) in
+                    if eachLangKeys[stringsFile.path] == nil { eachLangKeys[stringsFile.path] = .init() }
+                    allKeys.insert(stringsLine.fullKey)
+                    eachLangKeys[stringsFile.path]!.insert(stringsLine.fullKey)
+                }
+            }
+        }
+    }
+
+    eachLangKeys.forEach { (langPath, langKeys) in
+        diffLangKeys[langPath] = allKeys.subtracting(langKeys)
+        if diffLangKeys.count > 0 {
+            fatalError("ERROR: localization files are difference: \(diffLangKeys)")
+        }
+    }
 }
 
 

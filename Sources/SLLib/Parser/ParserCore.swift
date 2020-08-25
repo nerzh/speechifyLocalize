@@ -21,7 +21,7 @@ final class ParserCore {
 
     func run() throws {
         /// the strings files keys comparison
-//        checkLocalizationKeysDiff(parser.localizationPath)
+        checkLocalizationKeysDiff(parser.localizationPath, parser.localizedPrefix)
 
         /// Current localized strings
         let localeStore: LocaleStore = getCurrentStrings(path: parser.localizationPath, localizedPrefix: parser.localizedPrefix)
@@ -144,25 +144,4 @@ extension ParserCore {
             }
         }
     }
-
-//    private func translateValue(folder: LocaleFolder, group: inout LineGroup) {
-//        let folderLang: String = getFolderLang(folder.path)
-//        if folderLang == parser.lang { return }
-//        group.lines = group.lines.map { (line) -> TextLine in
-//            let newValue: String = (try? translate(line.getValue(),
-//                                                   from: parser.lang,
-//                                                   to: folderLang,
-//                                                   api: parser.googleApi,
-//                                                   key: parser.googlekey)) ?? ""
-//            if newValue.isEmpty {
-//                return line
-//            } else {
-//                return TextLine(number: line.number,
-//                                clearKey: line.getClearKey(),
-//                                localizedPrefix: parser.localizedPrefix,
-//                                value: newValue,
-//                                type: line.type)
-//            }
-//        }
-//    }
 }
