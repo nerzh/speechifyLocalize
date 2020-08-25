@@ -55,61 +55,69 @@ extension ParserCore {
                                                _ methodPrefix: String,
                                                _ localeStore: LocaleStore
     ) {
-        iterateFileStringsLines(localizationPath: localizationPath) { (folderPath, filePath, localizedString, other) in
-            let folderLang: String = getFolderLang(folderPath)
-            if folderLang == parser.lang {
-
-            }
-        }
-
         localeStore.langs.forEach { (langFolder) in
             let folderLang: String = getFolderLang(langFolder.path)
             if folderLang == parser.lang {
                 var newSwiftFileContent: String = .init()
-                var tmpFilePath: String = .init()
                 var tmpFilePathTrigger: String = .init()
+                var backUpFileContent: String = .init()
                 iterateSwiftFilesKeys(projectPath: projectPath,
                                       localizedPrefix: localizedPrefix,
                                       stringPrefix: stringPrefix,
                                       methodPrefix: methodPrefix
                 ) { (filePath, clearKey, translated, target, raw) in
-                    tmpFilePath = filePath
                     if newSwiftFileContent.count > 0 && tmpFilePathTrigger != filePath {
-                        writeFile(to: filePath, newSwiftFileContent)
-                        cleanFile(path: filePath)
+                        if tmpFilePathTrigger.count > 0 {
+                            writeFile(to: tmpFilePathTrigger, newSwiftFileContent)
+                            cleanFile(path: tmpFilePathTrigger)
+                        }
                         newSwiftFileContent = .init()
                         tmpFilePathTrigger = filePath
+                        guard let fileUrl: URL = URL(string: tmpFilePathTrigger) else {
+                            fatalError("CAN NOT GET URL FROM STRING \(tmpFilePathTrigger)")
+                        }
+                        backUpFileContent = readFile(fileUrl)
                     }
                     if  let target = target,
                         let clearKey: String = makeClearKeyFrom(projectPath, filePath)
                     {
-                        var tempTarget: String = target
-                        var matches: [Int: String] = tempTarget.regexp(stringForLocalizePattern(stringPrefix))
+                        var tmpTarget: String = target
+                        var matches: [Int: String] = tmpTarget.regexp(stringForLocalizePattern(stringPrefix))
                         while let value: String = matches[2] {
                             langFolder.files.forEach { (filePath, stringsFile) in
                                 if  let swiftFileGroup: SwiftFileGroup = stringsFile.groups[clearKey],
                                     let stringLine: StringsLine = swiftFileGroup.getLine(value)
                                 {
-                                    tempTarget.replaceFirstSelf(replaceStringLocalizePattern(stringPrefix, value), "\"\(stringLine.fullKey)\".\(methodPrefix)")
+                                    tmpTarget.replaceFirstSelf(replaceStringLocalizePattern(stringPrefix, value), "\"\(stringLine.fullKey)\".\(methodPrefix)")
                                 } else {
+                                    writeFile(to: tmpFilePathTrigger, backUpFileContent)
                                     fatalError("VALUE \(value) NOT FOUND. PLEASE CHECK REGEXP FOR PARSE NEW STRINGS")
                                 }
                             }
-                            matches = tempTarget.regexp(stringForLocalizePattern(stringPrefix))
+                            matches = tmpTarget.regexp(stringForLocalizePattern(stringPrefix))
                         }
-                        newSwiftFileContent.append(tempTarget)
-
-                    } else if let raw = raw {
+                        newSwiftFileContent.append(tmpTarget)
+                    } else {
                         newSwiftFileContent.append(raw)
                     }
                 }
-                if newSwiftFileContent.count > 0 {
-                    writeFile(to: tmpFilePath, newSwiftFileContent)
-                    cleanFile(path: tmpFilePath)
-                    newSwiftFileContent = .init()
+                if newSwiftFileContent.count > 0 && tmpFilePathTrigger.count > 0 {
+                    writeFile(to: tmpFilePathTrigger, newSwiftFileContent)
+                    cleanFile(path: tmpFilePathTrigger)
                 }
             }
         }
+    }
+
+
+
+
+//    private func replaceInsideSwiftFiles(_ projectPath: String,
+//                                         _ localizationPath: String,
+//                                         _ localizedPrefix: String,
+//                                         _ stringPrefix: String,
+//                                         _ methodPrefix: String
+//    ) {
 //        recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
 //            guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: fileURL.path) else { return }
 //            if !isValidSwiftFileName(relativeFilePath) { return }
@@ -136,42 +144,7 @@ extension ParserCore {
 //                cleanFile(path: fileURL.path)
 //            }
 //        }
-    }
-
-
-    private func replaceInsideSwiftFiles(_ projectPath: String,
-                                         _ localizationPath: String,
-                                         _ localizedPrefix: String,
-                                         _ stringPrefix: String,
-                                         _ methodPrefix: String
-    ) {
-        recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
-            guard let relativeFilePath: String = makeRelativePath(from: projectPath, to: fileURL.path) else { return }
-            if !isValidSwiftFileName(relativeFilePath) { return }
-
-            if folderPath != localizationPath {
-                var resultText: String = .init()
-                readFile(fileURL) { (str) in
-                    let matches: [Int: String] = str.regexp(stringForLocalizePattern(stringPrefix))
-                    if matches[0] != nil {
-                        if  let beforeValue = matches[1],
-                            let value = matches[2],
-                            let afterValue = matches[3]
-                        {
-                            if let localizedKey: String = findLocalizedString(projectPath, localizedPrefix, relativeFilePath, value) {
-                                let newLine = str.replace("^[\\s\\S]+$", "\(beforeValue)\"\(localizedKey)\".\(methodPrefix)\(afterValue)")
-                                resultText.append(newLine)
-                            }
-                            return
-                        }
-                    }
-                    resultText.append(str)
-                }
-                writeFile(to: fileURL.path, resultText)
-                cleanFile(path: fileURL.path)
-            }
-        }
-    }
+//    }
 
     private func findLocalizedString(_ path: String,
                                      _ localizedPrefix: String,

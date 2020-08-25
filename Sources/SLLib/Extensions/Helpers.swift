@@ -63,6 +63,14 @@ public func readFile(_ fileURL: URL, _ handler: (_ line: String) -> Void) {
     }
 }
 
+public func readFile(_ fileURL: URL) -> String {
+    var content: String = .init()
+    readFile(fileURL) { (line) in
+        content.append(line)
+    }
+    return content
+}
+
 public func writeFile(to: String, _ text: String) {
     let fileDescriptor = open(to, O_TRUNC | O_WRONLY | O_CREAT, 0o755)
 
@@ -378,7 +386,7 @@ func iterateSwiftFilesKeys(projectPath: String,
                            localizedPrefix: String,
                            stringPrefix: String,
                            methodPrefix: String,
-                           _ handler: (_ filePath: String, _ clearKey: String, _ translated: String?, _ target: String?, _ raw: String?) -> Void
+                           _ handler: (_ filePath: String, _ clearKey: String, _ translated: String?, _ target: String?, _ raw: String) -> Void
 ) {
     recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
         if !isValidSwiftFileName(fileURL.path) { return }

@@ -67,7 +67,12 @@ public struct StringsFile {
     }
 
     mutating func addNewString(clearKey: String, value: String) {
-        groups[clearKey]?.addNewString(clearKey: clearKey, value: value)
+        if groups[clearKey] != nil {
+            groups[clearKey]!.addNewString(clearKey: clearKey, value: value)
+        } else {
+            groups[clearKey] = SwiftFileGroup(clearKey: clearKey, keyPrefix: keyPrefix)
+            groups[clearKey]!.addNewString(clearKey: clearKey, value: value)
+        }
     }
 }
 
