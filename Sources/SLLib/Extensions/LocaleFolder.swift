@@ -81,6 +81,9 @@ public struct StringsFile {
     var path: String
     var keyPrefix: String
     var groups: [ClearKey: SwiftFileGroup] = .init()
+    var sortedGroups: [(key: ClearKey, value: SwiftFileGroup)] {
+        groups.sorted(by: { $0.key < $1.key })
+    }
 
     init(path: String, keyPrefix: String) {
         self.path = path

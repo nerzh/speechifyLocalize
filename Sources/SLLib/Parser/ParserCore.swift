@@ -133,9 +133,9 @@ extension ParserCore {
                 if !fileManager.fileExists(atPath: filePath) {
                     fileManager.createFile(atPath: filePath, contents: nil, attributes: nil)
                 }
-                stringsFile.groups.forEach { (clearKey, swiftFileGroup) in
+                stringsFile.sortedGroups.forEach { (tuple) in
                     resultString.append("\n\n")
-                    swiftFileGroup.lines.forEach { (line) in
+                    tuple.value.lines.forEach { (line) in
                         resultString.append("\(line.makeLocalizable())\n")
                     }
                 }

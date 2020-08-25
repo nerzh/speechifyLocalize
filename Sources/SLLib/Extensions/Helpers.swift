@@ -260,7 +260,8 @@ public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPre
     }
 
     eachLangKeys.forEach { (langPath, langKeys) in
-        diffLangKeys[langPath] = allKeys.subtracting(langKeys)
+        let diff: Set<String> = allKeys.subtracting(langKeys)
+        if diff.count > 0 { diffLangKeys[langPath] = diff }
         if diffLangKeys.count > 0 {
             fatalError("ERROR: localization files are difference: \(diffLangKeys)")
         }

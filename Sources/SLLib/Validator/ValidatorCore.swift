@@ -17,9 +17,8 @@ final class ValidatorCore {
 
     func run() throws {
         /// the strings files keys comparison
-//        checkLocalizationKeysDiff(validator.localizationPath)
         checkLocalizationKeysDiff(validator.localizationPath, validator.localizedPrefix)
-        return
+
         switch validator.type {
         case .deleteUnusedKeys:
             deleteUnusedLocalizationStrings(validator.projectPath,
