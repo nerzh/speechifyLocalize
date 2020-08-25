@@ -30,7 +30,7 @@ public func csvElementPattern(_ separator: String) -> String {
 }
 
 public func stringForLocalizePattern(_ stringPrefix: String) -> String {
-    "^([\\s\\S]*)\"\\s*\(stringPrefix)\\.([\\s\\S]+)\\S*?\"([\\s\\S]*)$"
+    "^([\\s\\S]*)\"\\s*\(stringPrefix)\\.([\\s\\S]+?)\"([\\s\\S]*)$"
 }
 
 public func replaceStringLocalizePattern(_ stringPrefix: String) -> String {

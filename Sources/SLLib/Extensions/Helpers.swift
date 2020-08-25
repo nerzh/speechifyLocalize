@@ -108,7 +108,6 @@ public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleSt
             }
             tmpLangFolder = LangFolder(path: folderPath)
         }
-
         if tmpLangFolder.files[filePath] == nil {
             tmpLangFolder.files[filePath] = StringsFile(path: filePath, keyPrefix: localizedPrefix)
         }

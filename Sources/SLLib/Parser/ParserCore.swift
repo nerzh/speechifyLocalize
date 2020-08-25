@@ -91,6 +91,8 @@ extension ParserCore {
                                     let stringLine: StringsLine = swiftFileGroup.getLine(value)
                                 {
                                     tempTarget.replaceFirstSelf(replaceStringLocalizePattern(stringPrefix, value), "\"\(stringLine.fullKey)\".\(methodPrefix)")
+                                } else {
+                                    fatalError("VALUE \(value) NOT FOUND. PLEASE CHECK REGEXP FOR PARSE NEW STRINGS")
                                 }
                             }
                             matches = tempTarget.regexp(stringForLocalizePattern(stringPrefix))

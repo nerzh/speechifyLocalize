@@ -12,11 +12,14 @@ public class LocaleStore {
     var langs: [LangFolder] = .init()
 
     func addNewString(clearKey: String, target: String, stringPrefix: String) {
-        let matches: [Int: String] = target.regexp(stringForLocalizePattern(stringPrefix))
-        if let value: String = matches[2] {
+        var tmpTarget: String = target
+        var matches: [Int: String] = tmpTarget.regexp(stringForLocalizePattern(stringPrefix))
+        while let value: String = matches[2] {
             langs.forEach { (lang) in
                 lang.addNewString(clearKey: clearKey, value: value)
             }
+            tmpTarget.replaceFirstSelf(replaceStringLocalizePattern(stringPrefix, value), "")
+            matches = tmpTarget.regexp(stringForLocalizePattern(stringPrefix))
         }
     }
 }
