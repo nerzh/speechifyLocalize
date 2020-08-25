@@ -83,7 +83,7 @@ extension ParserCore {
                         }
                         newSwiftFileContent = .init()
                         tmpFilePathTrigger = filePath
-                        guard let fileUrl: URL = URL(string: tmpFilePathTrigger) else {
+                        guard let fileUrl: URL = URL(string: urlEncode(tmpFilePathTrigger)) else {
                             fatalError("CAN NOT GET URL FROM STRING \(tmpFilePathTrigger)")
                         }
                         backUpFileContent = readFile(fileUrl)
