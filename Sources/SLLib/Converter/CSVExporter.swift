@@ -32,24 +32,19 @@ final class CSVExporter {
 
 // MARK: PRIVATE METHODS
 extension CSVExporter {
-    
+
     private func convert(_ localizationPath: String, _ tableFilePath: String) {
-        let currentLocales: [LocaleFolder] = getCurrentLocalizations(path: localizationPath, localizedPrefix: localizedPrefix)
+        let localeStore: LocaleStore = getCurrentStrings(path: localizationPath, localizedPrefix: localizedPrefix)
         var csvFile: CSVFile = .init(separator: separator)
         csvFile.addColumnName(keyName)
-
-        currentLocales.forEach { (localeFolder) in
-            guard let langName: String = getLocaleName(localeFolder.path) else { return }
+        
+        localeStore.langs.forEach { (langFolder) in
+            let langName: String = langFolder.getLocaleName()
             csvFile.addColumnName(langName)
-            localeFolder.files.forEach { (localeFile) in
-                localeFile.groups.forEach { (group) in
-                    group.lines.forEach { (textLine) in
-                        switch textLine.type {
-                        case .localizedString:
-                            csvFile[textLine.getKey()][langName] = textLine.getValue()
-                        default:
-                            break
-                        }
+            langFolder.files.values.forEach { (stringsFile) in
+                stringsFile.groups.forEach { (clearKey, swiftFileGroup) in
+                    swiftFileGroup.lines.forEach { (stringsLine) in
+                        csvFile[stringsLine.fullKey][langName] = stringsLine.value
                     }
                 }
             }
@@ -57,4 +52,29 @@ extension CSVExporter {
 
         csvFile.write(to: tableFilePath)
     }
+    
+//    private func convert(_ localizationPath: String, _ tableFilePath: String) {
+//        let currentLocales: [LocaleFolder] = getCurrentLocalizations(path: localizationPath, localizedPrefix: localizedPrefix)
+//        var csvFile: CSVFile = .init(separator: separator)
+//        csvFile.addColumnName(keyName)
+//
+//        currentLocales.forEach { (localeFolder) in
+//            guard let langName: String = getLocaleName(localeFolder.path) else { return }
+//            csvFile.addColumnName(langName)
+//            localeFolder.files.forEach { (localeFile) in
+//                localeFile.groups.forEach { (group) in
+//                    group.lines.forEach { (textLine) in
+//                        switch textLine.type {
+//                        case .localizedString:
+//                            csvFile[textLine.getKey()][langName] = textLine.getValue()
+//                        default:
+//                            break
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        csvFile.write(to: tableFilePath)
+//    }
 }

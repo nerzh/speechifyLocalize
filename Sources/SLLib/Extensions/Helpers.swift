@@ -83,26 +83,26 @@ public func writeFile(to: String, _ text: String) {
     }
 }
 
-public func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
-    var tempStore: [String: LocaleFolder] = .init()
-
-    findStringsFiles(form: path) { (folderPath, fileURL) in
-        var localeFolder: LocaleFolder = .init(path: folderPath)
-        if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
-        var localeFile: LocaleFile = .init(path: fileURL.path, localizedPrefix: localizedPrefix)
-        readFile(fileURL) { (str) in
-            localeFile.parseLocalizableString(str)
-        }
-        localeFolder.addLocaleFile(localeFile)
-        tempStore[localeFolder.path] = localeFolder
-    }
-
-    let result: [LocaleFolder] = tempStore.values.map { (localeFolder) -> LocaleFolder in
-        localeFolder
-    }
-
-    return result
-}
+//public func getCurrentLocalizations(path: String, localizedPrefix: String) -> [LocaleFolder] {
+//    var tempStore: [String: LocaleFolder] = .init()
+//
+//    findStringsFiles(form: path) { (folderPath, fileURL) in
+//        var localeFolder: LocaleFolder = .init(path: folderPath)
+//        if tempStore[folderPath] != nil { localeFolder = tempStore[folderPath]! }
+//        var localeFile: LocaleFile = .init(path: fileURL.path, localizedPrefix: localizedPrefix)
+//        readFile(fileURL) { (str) in
+//            localeFile.parseLocalizableString(str)
+//        }
+//        localeFolder.addLocaleFile(localeFile)
+//        tempStore[localeFolder.path] = localeFolder
+//    }
+//
+//    let result: [LocaleFolder] = tempStore.values.map { (localeFolder) -> LocaleFolder in
+//        localeFolder
+//    }
+//
+//    return result
+//}
 
 public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleStore {
     let localeStore: LocaleStore = .init()
@@ -338,17 +338,6 @@ func translate(_ text: String, from: String = "en", to: String, api: String, key
     return try googleTranslate.translate(text, from: from, to: to)
 }
 
-public func getLocaleName(_ path: String) -> String? {
-    path.regexp(LprojNamePattern)[1]
-}
-
-public func getFolderLang(_ folderPath: String) -> String {
-    guard let folderLang: String = folderPath.regexp(LprojNamePattern)[1] else {
-        fatalError("Can not parse lang name")
-    }
-    return folderLang
-}
-
 func getAllLocalizeStringItems(_ localizedString: String?,
                                _ keyPrefix: String
 ) -> (key: String, clearKey: String, prefix: String, number: Int, value: String)? {
@@ -403,4 +392,22 @@ func iterateSwiftFilesKeys(projectPath: String,
             }
         }
     }
+}
+
+func escapeRegexpSymbols(_ value: inout String) {
+    value.replaceSelf(#"\\"#, "\\\\")
+    value.replaceSelf(#"\^"#, "\\\\^")
+    value.replaceSelf(#"\$"#, "\\\\$")
+    value.replaceSelf(#"\*"#, "\\\\*")
+    value.replaceSelf(#"\+"#, "\\\\+")
+    value.replaceSelf(#"\."#, "\\\\.")
+    value.replaceSelf(#"\|"#, "\\\\|")
+    value.replaceSelf(#"\{"#, "\\\\{")
+    value.replaceSelf(#"\}"#, "\\\\}")
+    value.replaceSelf(#"\["#, "\\\\[")
+    value.replaceSelf(#"\]"#, "\\\\]")
+    value.replaceSelf(#"\("#, "\\\\(")
+    value.replaceSelf(#"\)"#, "\\\\)")
+    value.replaceSelf(#"\:"#, "\\\\:")
+    value.replaceSelf(#"\?"#, "\\\\?")
 }
