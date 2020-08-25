@@ -35,6 +35,22 @@ final class ValidatorCore {
                                           validator.localizedPrefix,
                                           validator.stringPrefix,
                                           validator.methodPrefix)
+        case .all
+            /// sync
+            localizationFilesSynchronizer(validator.projectPath,
+                                          validator.localizationPath,
+                                          validator.localizedPrefix,
+                                          validator.stringPrefix,
+                                          validator.methodPrefix)
+            /// deleteUnusedKeys
+            deleteUnusedLocalizationStrings(validator.projectPath,
+                                            validator.localizationPath,
+                                            validator.localizedPrefix)
+            /// fileName
+            replaceKeysOfChangedFiles(validator.projectPath,
+                                      validator.localizationPath,
+                                      validator.localizedPrefix,
+                                      validator.methodPrefix)
         }
     }
 }
@@ -186,17 +202,9 @@ extension ValidatorCore {
                                                _ stringPrefix: String,
                                                _ methodPrefix: String
     ) {
-        return
         var existingKeys: [String: Set<String>] = .init()
         var localizedKeys: Set<String> = .init()
         var notExistingKeys: [String: [String]] = .init()
-
-//        iterateLocalizationFiles(localizationPath: localizationPath,
-//                                 localizedPrefix: localizedPrefix
-//        ) { (path, textLine) in
-//            if existingKeys[path] == nil { existingKeys[path] = .init() }
-//            existingKeys[path]!.insert(textLine.getKey())
-//        }
 
         iterateFileStringsLines(localizationPath: localizationPath) { (folderPath, filePath, localizedString, other) in
             if let items = getAllLocalizeStringItems(localizedString, localizedPrefix) {
@@ -210,10 +218,12 @@ extension ValidatorCore {
                               stringPrefix: stringPrefix,
                               methodPrefix: methodPrefix
         ) { (filePath, clearKey, translated, target, raw) in
-            if  let translated = translated
-            {
+            if let translated = translated {
                 var tmpline: String = translated
+                var warningCounter: Int = 0
                 while tmpline[fileLocalizedStringPattern(localizedPrefix, methodPrefix)] {
+                    warningCounter += 1
+                    if warningCounter > 15 { fatalError("WARNING: INFINITY CYCLE. PLEASE CHECK REGEXP.") }
                     if let key: String = tmpline.regexp(swiftFilelocalizedKeyPattern(localizedPrefix, methodPrefix))[1] {
                         localizedKeys.insert(key)
                     }

@@ -39,6 +39,7 @@ public enum ValidationType: String, CaseIterable {
     case sync
     case deleteUnusedKeys
     case fileName
+    case all
 }
 
 
