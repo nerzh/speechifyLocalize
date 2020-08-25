@@ -96,7 +96,7 @@ extension ParserCore {
                         var warningCounter: Int = 0
                         while var value: String = matches[2] {
                             warningCounter += 1
-                            if warningCounter > 1000 {
+                            if warningCounter > 15 {
                                 writeFile(to: tmpFilePathTrigger, backUpFileContent)
                                 fatalError("WARNING: INFINITY CYCLE. PLEASE CHECK REGEXP.")
                             }

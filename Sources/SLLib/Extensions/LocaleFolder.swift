@@ -24,7 +24,7 @@ public class LocaleStore {
         var warningCounter: Int = 0
         while var value: String = matches[2] {
             warningCounter += 1
-            if warningCounter > 1000 { fatalError("WARNING: INFINITY CYCLE. PLEASE CHECK REGEXP.") }
+            if warningCounter > 15 { fatalError("WARNING: INFINITY CYCLE. PLEASE CHECK REGEXP.") }
             langs.forEach { (lang) in
                 lang.addNewString(clearKey: clearKey, value: value, defaultLang: defaultLang, gApi: gApi, gKey: gKey)
             }

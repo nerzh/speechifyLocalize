@@ -332,7 +332,7 @@ func iterateSwiftFilesKeys(projectPath: String,
 }
 
 func escapeRegexpSymbols(_ value: inout String) {
-    value.replaceSelf(#"\\"#, "\\\\")
+    value.replaceSelf("\\", "\\\\\\\\", [.ignoreMetacharacters])
     value.replaceSelf(#"\^"#, "\\\\^")
     value.replaceSelf(#"\$"#, "\\\\$")
     value.replaceSelf(#"\*"#, "\\\\*")
