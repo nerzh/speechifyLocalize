@@ -56,14 +56,6 @@ struct CSVFile {
         }
     }
 
-//    mutating func add(_ values: String...) {
-//        var row: CSVRow = .init()
-//        values.forEach { row.add($0) }
-//        addColumns(rows.count, &row)
-//        addRowKey(rows.count, key: row.first ?? "")
-//        rows.append(row)
-//    }
-
     mutating func add(_ values: [String]) {
         var row: CSVRow = .init()
         values.forEach { row.add($0) }
@@ -71,22 +63,6 @@ struct CSVFile {
         addRowKey(rows.count, key: row.first ?? "")
         rows.append(row)
     }
-
-//    mutating func add(to column: String, _ value: String) {
-//        var row: CSVRow = .init()
-//        row.columns = columns
-//        row[column] = value
-//        addRowKey(rows.count, key: row.first ?? "")
-//        rows.append(row)
-//    }
-
-//    mutating func add(to index: Int, _ value: String) {
-//        var row: CSVRow = .init()
-//        row.columns = columns
-//        row[index] = value
-//        addRowKey(rows.count, key: row.first ?? "")
-//        rows.append(row)
-//    }
 
     mutating func addColumnName(_ name: String) {
         var row: CSVRow = rows.first ?? .init()
