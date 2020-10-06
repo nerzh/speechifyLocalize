@@ -35,7 +35,7 @@ final class ValidatorCore {
                                           validator.localizedPrefix,
                                           validator.stringPrefix,
                                           validator.methodPrefix)
-        case .all
+        case .all:
             /// sync
             localizationFilesSynchronizer(validator.projectPath,
                                           validator.localizationPath,

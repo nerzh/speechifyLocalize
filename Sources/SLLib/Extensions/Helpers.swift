@@ -212,33 +212,6 @@ public func cleanFile(path: String) {
     writeFile(to: path, newText)
 }
 
-//public func checkLocalizationKeysDiff(_ localizationPath: String) {
-//    var lastSet: Set<String> = .init()
-//    var currentSet: Set<String> = .init()
-//    recursiveReadDirectory(path: localizationPath) { (folderPath, fileURL) in
-//        if !isValidStringsFileName(fileURL.path) { return }
-//        readFile(fileURL) { (line) in
-//            let matches: [Int: String] = line.regexp(LocalizableStringPattern)
-//            if let key: String = matches[1] {
-//                currentSet.insert(key)
-//            }
-//        }
-//        if lastSet.count != 0 {
-//            var diff: Set<String> = .init()
-//            if currentSet.count > lastSet.count {
-//                diff = currentSet.subtracting(lastSet)
-//            } else {
-//                diff = lastSet.subtracting(currentSet)
-//            }
-//            if diff.count > 0 {
-//                fatalError("ERROR: localization files are difference: \(diff)")
-//            }
-//        }
-//        lastSet = currentSet
-//    }
-//}
-
-
 public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPrefix: String) {
 
     var allKeys: Set<String> = .init()
@@ -304,6 +277,17 @@ func iterateFileStringsLines(localizationPath: String,
             } else {
                 handler(folderPath, fileURL.path, nil, line)
             }
+        }
+    }
+}
+
+func iterateStringsFile(_ filePath: String?, _ handler: (_ localizedString: String?, _ other: String?) -> Void) {
+    guard let filePath = filePath, let fileURL = URL(string: filePath) else { return }
+    readFile(fileURL) { (line) in
+        if line[LocalizableStringPattern] {
+            handler(line, nil)
+        } else {
+            handler(nil, line)
         }
     }
 }
