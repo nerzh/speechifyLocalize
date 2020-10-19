@@ -58,6 +58,7 @@ struct CSVFile {
 
     mutating func add(_ values: [String]) {
         var row: CSVRow = .init()
+        row.numberLine = rows.count + 1
         values.forEach { row.add($0) }
         addColumns(rows.count, &row)
         addRowKey(rows.count, key: row.first ?? "")
@@ -93,6 +94,9 @@ struct CSVFile {
         var isFirstLine: Bool = true
         readFile(fileURL) { (line) in
             let values: [String] = split(line, separator)
+            if rows.count > 0 && values.count != rows.last!.values.count {
+                fatalError("BAD CSV FILE. Amount values of previous line != Amount values of this line: \(rows.count + 1).")
+            }
             if isFirstLine {
                 values.forEach { addColumnName($0) }
                 isFirstLine = false
@@ -107,6 +111,11 @@ struct CSVFile {
         var string: String = string.clean()
 
         while true {
+            if string[#"^,"#] {
+                string.replaceFirstSelf(#"^,"#, "")
+                result.append("")
+                continue
+            }
             let matches: [Int: String] = string.regexp(csvElementPattern(separator))
             if var value = matches[1] {
                 value.replaceSelf("^\"", "")
@@ -117,7 +126,6 @@ struct CSVFile {
             }
             break
         }
-
         return result
     }
 
@@ -137,9 +145,10 @@ struct CSVFile {
 
 struct CSVRow: Sequence {
 
-    private var values: [String] = .init()
+    var values: [String] = .init()
     var columns: [String: Int] = .init()
     var first: String? { values.first }
+    var numberLine: Int = .init()
 
     subscript(index: Int) -> String {
         get { values[index] }

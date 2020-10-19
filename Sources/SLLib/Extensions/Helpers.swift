@@ -299,6 +299,7 @@ func iterateSwiftFilesKeys(projectPath: String,
                            _ handler: (_ filePath: String, _ clearKey: String, _ translated: String?, _ target: String?, _ raw: String) -> Void
 ) {
     recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
+        if folderPath[#"/Pods$"#] { return }
         if !isValidSwiftFileName(fileURL.path) { return }
         guard let clearKey: String = makeClearKeyFrom(projectPath, fileURL.path) else {
             fatalError("ERROR: make ClearKey for \(fileURL.path)")
