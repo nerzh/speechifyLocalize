@@ -92,7 +92,7 @@ extension ValidatorCore {
         var keysIndex: [String: Int] = .init()
         with.forEach { keysIndex[$0] = 0 }
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
-            if folderPath[#"/Pods$"#] { return }
+            if folderPath[#"[\s\S]+Pods($|[/])"#] { return }
             if !isValidSwiftFileName(fileURL.path) { return }
             readFile(fileURL) { (line) in
                 getDataFromAnyLocalizedKey(line, localizedPrefix) { clearKeys in
@@ -153,7 +153,7 @@ extension ValidatorCore {
     ) -> [(from: String, to: String)] {
         var result: [(from: String, to: String)] = .init()
         recursiveReadDirectory(path: projectPath) { (folderPath, fileURL) in
-            if folderPath[#"/Pods$"#] { return }
+            if folderPath[#"[\s\S]+Pods($|[/])"#] { return }
             if !isValidSwiftFileName(fileURL.path) { return }
             guard let currentClearKey: String = makeClearKeyFrom(projectPath, fileURL.path) else { return }
             readFile(fileURL) { (line) in
@@ -172,7 +172,7 @@ extension ValidatorCore {
         var tempIndex: [String: (from: String, to: String)] = .init()
         diff.forEach { tempIndex[$0.from] = $0 }
         recursiveReadDirectory(path: path) { (folderPath, fileURL) in
-            if folderPath[#"/Pods$"#] { return }
+            if folderPath[#"[\s\S]+Pods($|[/])"#] { return }
             if !(isValidStringsFileName(fileURL.path) || isValidSwiftFileName(fileURL.path)) { return }
             var newText: String = .init()
             readFile(fileURL) { (line) in
