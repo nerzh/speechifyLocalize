@@ -25,7 +25,7 @@ final class ParserCore {
 
         /// Current localized strings
         let localeStore: LocaleStore = getCurrentStrings(path: parser.localizationPath, localizedPrefix: parser.localizedPrefix)
-
+        
         /// Add new localized strings to localized current strings
         iterateSwiftFilesKeys(projectPath: parser.projectPath,
                               localizedPrefix: parser.localizedPrefix,
@@ -71,6 +71,7 @@ extension ParserCore {
                 var newSwiftFileContent: String = .init()
                 var tmpFilePathTrigger: String = .init()
                 var backUpFileContent: String = .init()
+                
                 iterateSwiftFilesKeys(projectPath: projectPath,
                                       localizedPrefix: localizedPrefix,
                                       stringPrefix: stringPrefix,

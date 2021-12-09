@@ -88,20 +88,19 @@ public func getCurrentStrings(path: String, localizedPrefix: String) -> LocaleSt
     var tmpLangFolder: LangFolder = .init(path: "")
 
     iterateFileStringsLines(localizationPath: path) { (folderPath, filePath, localizedString, other) in
-        guard let localizedString = localizedString else { return }
         if tmpLangFolder.path != folderPath {
-            if tmpLangFolder.files.count > 0 {
+            tmpLangFolder = LangFolder(path: folderPath)
+            
+            if localeStore.langs.first(where: { $0.path == tmpLangFolder.path }) == nil {
                 localeStore.langs.append(tmpLangFolder)
             }
-            tmpLangFolder = LangFolder(path: folderPath)
         }
+        
         if tmpLangFolder.files[filePath] == nil {
             tmpLangFolder.files[filePath] = StringsFile(path: filePath, keyPrefix: localizedPrefix)
         }
+        guard let localizedString = localizedString else { return }
         tmpLangFolder.files[filePath]?.parseLocalizedString(localizedString: localizedString)
-    }
-    if tmpLangFolder.files.count > 0 {
-        localeStore.langs.append(tmpLangFolder)
     }
 
     return localeStore
