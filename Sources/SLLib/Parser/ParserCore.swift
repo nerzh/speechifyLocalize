@@ -36,9 +36,7 @@ final class ParserCore {
                 localeStore.addNewString(clearKey: clearKey,
                                          target: target,
                                          stringPrefix: parser.stringPrefix,
-                                         defaultLang: parser.lang,
-                                         gApi: parser.googleApi,
-                                         gKey: parser.googlekey)
+                                         defaultLang: parser.lang)
             }
         }
 
