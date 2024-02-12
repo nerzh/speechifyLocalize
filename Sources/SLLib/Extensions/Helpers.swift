@@ -241,6 +241,13 @@ public func checkLocalizationKeysDiff(_ localizationPath: String, _ localizedPre
     }
 }
 
+
+func translate(_ text: String, from: String = "en", to: String, api: String, key: String) throws -> String {
+    let googleTranslate: GoogleTranslate = .init(api: api, key: key)
+
+    return try googleTranslate.translate(text, from: from, to: to)
+}
+
 func getAllLocalizeStringItems(_ localizedString: String?,
                                _ keyPrefix: String
 ) -> (key: String, clearKey: String, prefix: String, number: Int, value: String)? {

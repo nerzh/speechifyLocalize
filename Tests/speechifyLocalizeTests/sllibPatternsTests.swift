@@ -150,6 +150,22 @@ final class sllibPatternsTests: XCTestCase {
         XCTAssertEqual(testdString.regexp(csvElementPattern(separator))[1], "\"Ba\"se\"")
     }
 
+    func testTranslate() throws {
+        let langFrom: String = "ru"
+        let langTo: String = "en"
+        let text: String = "Привет мир !"
+        let expectedResult: String = "Hello World !"
+        let api: String = "https://translation.googleapis.com/language/translate/v2"
+        let file = FileReader(fileURL: URL(string: "./Tests/speechifyLocalizeTests/Fixtures/GoogleKey.txt")!)
+        try file.open()
+        defer { file.close() }
+        guard var key: String = try file.readLine() else { throw SLError(reason: "Google Key not found") }
+        key = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        let result: String = (try? translate(text, from: langFrom, to: langTo, api: api, key: key)) ?? ""
+
+        XCTAssertEqual(result, expectedResult)
+    }
+
     static var allTests = [
         ("testRealPath", testLocalizableStringPattern),
         ("testPathWithSwiftExtensionPattern", testPathWithSwiftExtensionPattern),
@@ -157,6 +173,7 @@ final class sllibPatternsTests: XCTestCase {
         ("testFileNamePattern", testFileNamePattern),
         ("testStringFilePattern", testStringFilePattern),
         ("testCsvElementPattern", testCsvElementPattern),
+        ("testTranslate", testTranslate),
     ]
 }
 
