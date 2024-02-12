@@ -44,7 +44,9 @@ final class GoogleTranslate {
         if let data: Data = rawResponse.data(using: .utf8) {
             let response: ModelResponse = try JSONDecoder().decode(ModelResponse.self, from: data)
             response.data.translations.forEach { (translation) in
-                result = translation.translatedText
+                var resultText = translation.translatedText
+                resultText = resultText.removeApostrophes()
+                result = resultText
             }
         }
 
@@ -52,4 +54,12 @@ final class GoogleTranslate {
     }
 }
 
-
+private extension String {
+    func removeApostrophes() -> String {
+        var newString = self
+        let apostropheRegex = try! NSRegularExpression(pattern: "&#39;", options: .caseInsensitive)
+        let range = NSRange(location: 0, length: newString.count)
+        newString = apostropheRegex.stringByReplacingMatches(in: newString, options: [], range: range, withTemplate: "'")
+        return newString
+    }
+}

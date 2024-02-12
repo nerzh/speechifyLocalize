@@ -7,9 +7,9 @@ git clone git@github.com:nerzh/speechifyLocalize.git
 
 cd speechifyLocalize
 
-swift build -c release
+run: $swift build -c release
 
-./.build/x86_64-apple-macosx/release/speechifyLocalize
+find the exec here, in the repo's folder (enable hidden folders): ./.build/arm64-apple-macosx/release/speechifyLocalize
 ```
 
 
