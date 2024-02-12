@@ -15,7 +15,9 @@ public class LocaleStore {
     func addNewString(clearKey: String,
                       target: String,
                       stringPrefix: String,
-                      defaultLang: String
+                      defaultLang: String,
+                      gApi: String,
+                      gKey: String
     ) {
         var tmpTarget: String = target
         var matches: [Int: String] = tmpTarget.regexp(stringForLocalizePattern(stringPrefix))
@@ -24,7 +26,7 @@ public class LocaleStore {
             warningCounter += 1
             if warningCounter > 15 { fatalError("WARNING: INFINITY CYCLE. PLEASE CHECK REGEXP.") }
             langs.forEach { (lang) in
-                lang.addNewString(clearKey: clearKey, value: value, defaultLang: defaultLang)
+                lang.addNewString(clearKey: clearKey, value: value, defaultLang: defaultLang, gApi: gApi, gKey: gKey)
             }
             escapeRegexpSymbols(&value)
             tmpTarget.replaceFirstSelf(replaceStringLocalizePattern(stringPrefix, value), "")
@@ -44,10 +46,17 @@ public class LangFolder {
 
     func addNewString(clearKey: String,
                       value: String,
-                      defaultLang: String
+                      defaultLang: String,
+                      gApi: String,
+                      gKey: String
     ) {
         files.forEach { (filePath, stringFile) in
-            files[filePath]?.addNewString(clearKey: clearKey, value: value)
+            var newValue: String = value
+            let lang = getLocaleName()
+            if lang != defaultLang {
+                newValue = tryTranslate(value: value, from: defaultLang, to: lang, gApi: gApi, gKey: gKey)
+            }
+            files[filePath]?.addNewString(clearKey: clearKey, value: newValue)
         }
     }
 
@@ -56,6 +65,13 @@ public class LangFolder {
             fatalError("Can not parse lang name")
         }
         return folderLang
+    }
+
+    private func tryTranslate(value: String, from: String, to: String, gApi: String, gKey: String) -> String {
+        if let newValue: String = try? translate(value, from: from, to: to, api: gApi, key: gKey) {
+            return newValue
+        }
+        return value
     }
 }
 

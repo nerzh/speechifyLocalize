@@ -19,6 +19,12 @@ public struct Parser: ParsableCommand {
     @Option(default: "localize", help: "Prefix for raw strings")
     var stringPrefix: String
 
+    @Option(name: .customLong("gKey"), help: "Google Key")
+    var googlekey: String
+
+    @Option(name: .customLong("gApi"), default: "https://translation.googleapis.com/language/translate/v2", help: "Google API URL")
+    var googleApi: String
+
     @Option(default: "en", help: "Default project language")
     var lang: String
 
